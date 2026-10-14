@@ -1,6 +1,13 @@
 export type CatalogItem = { id: number; name: string; price: number };
 export type Distribucion = { id: number; name: string; max: number };
-export type Modelo = CatalogItem & { m2: number; description: string; image_version: number; distribuciones: Distribucion[] };
+export type Modelo = CatalogItem & {
+  m2: number;
+  description: string;
+  image_version: number;
+  distribuciones: Distribucion[];
+  /** Meses de entrega desde hoy (0: no se muestra). */
+  delivery_months: number;
+};
 export type Forma = 'dos_aguas' | 'un_agua' | 'plana' | 'transitable';
 export type Cubierta = CatalogItem & { forma: Forma };
 export type Acabado = CatalogItem & { color: string };

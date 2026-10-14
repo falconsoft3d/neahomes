@@ -1,6 +1,6 @@
 {
     'name': 'NeaHomes',
-    'version': '17.0.2.3.0',
+    'version': '17.0.2.5.0',
     'summary': 'Configuración de casas NeaHomes',
     'sequence': 10,
     'description': """

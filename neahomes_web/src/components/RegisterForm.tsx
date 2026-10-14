@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ConditionsCheckbox from './ConditionsCheckbox';
 import QuoteSummary from './QuoteSummary';
-import { clearDraft, loadAcceptance, loadDraft } from '@/lib/draft';
+import { clearDraft, clearRef, loadAcceptance, loadDraft, loadRef } from '@/lib/draft';
 import type { Catalog, Conditions, Selection } from '@/lib/types';
 
 export default function RegisterForm({ catalog, conditions }: { catalog: Catalog | null; conditions: Conditions | null }) {
@@ -29,12 +29,19 @@ export default function RegisterForm({ catalog, conditions }: { catalog: Catalog
     const res = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, selection: draft, accept_conditions: accepted ? conditions?.id : undefined }),
+      body: JSON.stringify({
+        ...form,
+        selection: draft,
+        accept_conditions: accepted ? conditions?.id : undefined,
+        // Enlace de recomendación con el que llegó (si lo hay): Odoo lo guarda como origen del contacto.
+        ref_code: loadRef() ?? undefined,
+      }),
     });
     const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (!res.ok) return setError(data.error ?? 'No se pudo completar el registro.');
     clearDraft();
+    clearRef();
     router.push(data.quote ? `/cuenta?nueva=${encodeURIComponent(data.quote.name)}` : '/cuenta');
     router.refresh();
   }

@@ -4,7 +4,7 @@ import HeroCarousel from '@/components/HeroCarousel';
 import ModeloPhoto from '@/components/ModeloPhoto';
 import { getCatalog, getSlides } from '@/lib/odoo';
 import { CREDIT_NOTE, defaultCredit, formatMonths, formatPercent, monthlyPayment } from '@/lib/credit';
-import { formatMoney, formatPrice } from '@/lib/format';
+import { deliveryFrom, formatMoney, formatPrice } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,6 +68,7 @@ export default async function Home() {
                 <div className="card-body">
                   <h3>{m.name}</h3>
                   <p>{[m.m2 ? `${m.m2} m²` : '', `Desde ${formatPrice(m.price + extras, cur)}`].filter(Boolean).join(' · ')}</p>
+                  {m.delivery_months > 0 && <p className="card-delivery">{deliveryFrom(m.delivery_months)}</p>}
                   {credit && <p className="card-monthly">o <strong>{formatMoney(monthly(m.price + extras), cur)}/mes</strong>*</p>}
                   <Link href={`/encargar?modelo=${m.id}`} className="btn btn-primary btn-sm">Encargar</Link>
                 </div>

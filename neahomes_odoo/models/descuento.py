@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
@@ -13,11 +15,30 @@ class NeahomesDescuento(models.Model):
                           help='Importe en dinero que se resta del total de la cotización.')
     date_end = fields.Date(string='Vence el', help='Último día en que se puede usar. Vacío: no caduca.')
     description = fields.Char(string='Descripción')
+    partner_id = fields.Many2one('res.partner', string='Referente', ondelete='set null',
+                                 help='Contacto que recomienda. Quien se registre con el enlace de este código '
+                                      'quedará con origen «Recomendación» y este contacto como referente.')
+    share_url = fields.Char(string='Enlace para compartir', compute='_compute_share_url',
+                            help='Abre el diseñador con el código aplicado y recuerda el referente.')
     active = fields.Boolean(string='Habilitado', default=True)
     cotizacion_ids = fields.One2many('neahomes.cotizacion', 'descuento_id', string='Cotizaciones')
     usage_count = fields.Integer(string='Usos', compute='_compute_usage_count')
 
     _sql_constraints = [('code_uniq', 'unique(code)', 'Ya existe un código de descuento igual.')]
+
+    @api.depends('code')
+    def _compute_share_url(self):
+        base = (self.env['neahomes.parametro'].get_param('web_url', '') or '').rstrip('/')
+        for rec in self:
+            rec.share_url = f'{base}/encargar?codigo={quote(rec.code)}' if base and rec.code else False
+
+    @api.model
+    def _find_referral(self, code):
+        """Código (habilitado, aunque haya vencido) con referente: la recomendación no caduca con el descuento."""
+        code = self._normalize(code)
+        if not code:
+            return self.browse()
+        return self.sudo().search([('code', '=', code), ('partner_id', '!=', False)], limit=1)
 
     @api.depends('cotizacion_ids')
     def _compute_usage_count(self):

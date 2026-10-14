@@ -1,6 +1,37 @@
 import type { Catalog, Selection } from './types';
 
 const KEY = 'neahomes_draft';
+/** Código del enlace de recomendación (?codigo=): se recuerda 30 días y se envía al registrarse. */
+const REF_KEY = 'neahomes_ref';
+const REF_DAYS = 30;
+
+export function saveRef(code: string) {
+  try {
+    localStorage.setItem(REF_KEY, JSON.stringify({ code, at: Date.now() }));
+  } catch {}
+}
+
+export function loadRef(): string | null {
+  try {
+    const raw = localStorage.getItem(REF_KEY);
+    if (!raw) return null;
+    const { code, at } = JSON.parse(raw) as { code: string; at: number };
+    if (Date.now() - at > REF_DAYS * 24 * 60 * 60 * 1000) {
+      localStorage.removeItem(REF_KEY);
+      return null;
+    }
+    return code || null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearRef() {
+  try {
+    localStorage.removeItem(REF_KEY);
+  } catch {}
+}
+
 /** Id de las condiciones de venta que el usuario aceptó al diseñar (se envía al guardar la cotización). */
 const ACCEPT_KEY = 'neahomes_conditions';
 

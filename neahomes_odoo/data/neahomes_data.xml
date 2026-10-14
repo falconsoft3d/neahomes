@@ -20,6 +20,10 @@
         <field name="name">ci_company</field>
         <field name="valor">1</field>
     </record>
+    <record id="param_web_url" model="neahomes.parametro">
+        <field name="name">web_url</field>
+        <field name="valor">https://neahomes.vercel.app</field>
+    </record>
     <record id="param_instagram_url" model="neahomes.parametro">
         <field name="name">instagram_url</field>
         <field name="valor">https://www.instagram.com/</field>

@@ -1,22 +1,29 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import HouseIllustration from './HouseIllustration';
 import ConditionsCheckbox from './ConditionsCheckbox';
 import ModeloPhoto from './ModeloPhoto';
 import { CREDIT_NOTE, defaultCredit, financeSummary, formatPercent } from '@/lib/credit';
-import { formatExtra, formatMoney, formatPrice } from '@/lib/format';
-import { resolveSelection, saveAcceptance, saveDraft } from '@/lib/draft';
+import { deliveryFrom, formatExtra, formatMoney, formatPrice } from '@/lib/format';
+import { loadRef, resolveSelection, saveAcceptance, saveDraft, saveRef } from '@/lib/draft';
 import type { Catalog, Conditions, Discount, Selection } from '@/lib/types';
 
-type Props = { catalog: Catalog; loggedIn: boolean; initial: Partial<Selection>; conditions: Conditions | null };
+type Props = {
+  catalog: Catalog;
+  loggedIn: boolean;
+  initial: Partial<Selection>;
+  conditions: Conditions | null;
+  /** Código que llega en el enlace de recomendación (?codigo=). */
+  initialCode?: string;
+};
 
 function pick<T extends { id: number }>(items: T[], id?: number) {
   return (items.find((i) => i.id === id) ?? items[0])?.id ?? 0;
 }
 
-export default function Configurator({ catalog, loggedIn, initial, conditions }: Props) {
+export default function Configurator({ catalog, loggedIn, initial, conditions, initialCode }: Props) {
   const router = useRouter();
   const cur = catalog.currency;
   const [sel, setSel] = useState<Selection>({
@@ -41,9 +48,8 @@ export default function Configurator({ catalog, loggedIn, initial, conditions }:
   const [codeError, setCodeError] = useState('');
   const [checkingCode, setCheckingCode] = useState(false);
 
-  async function applyCode(e?: React.FormEvent) {
-    e?.preventDefault();
-    const code = codeInput.trim();
+  async function applyCode(code: string, { silent = false } = {}) {
+    code = code.trim();
     if (!code) return;
     setCodeError('');
     setCheckingCode(true);
@@ -52,11 +58,24 @@ export default function Configurator({ catalog, loggedIn, initial, conditions }:
     setCheckingCode(false);
     if (!res.ok) {
       setDiscount(null);
-      return setCodeError(data.error ?? 'El código no es válido o ha caducado.');
+      if (!silent) setCodeError(data.error ?? 'El código no es válido o ha caducado.');
+      return;
     }
     setDiscount(data.discount);
     setCodeInput('');
   }
+
+  // Enlace de recomendación: el código llega en la URL o se recordó de una visita anterior y se aplica solo.
+  useEffect(() => {
+    if (initialCode) {
+      saveRef(initialCode);
+      applyCode(initialCode);
+    } else {
+      const remembered = loadRef();
+      if (remembered) applyCode(remembered, { silent: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCode]);
   const [saving, setSaving] = useState(false);
   // Sin aceptar las condiciones de venta no se puede continuar (Odoo también lo comprueba).
   const [accepted, setAccepted] = useState(false);
@@ -151,6 +170,10 @@ export default function Configurator({ catalog, loggedIn, initial, conditions }:
         <header className="cfg-title">
           <h1>{r.modelo.name}</h1>
           <p>Llave en mano · Precio cerrado</p>
+          {r.modelo.delivery_months > 0 && (
+            // La fecha depende de «hoy»: puede diferir un día entre servidor y navegador.
+            <p className="cfg-delivery" suppressHydrationWarning>{deliveryFrom(r.modelo.delivery_months)}</p>
+          )}
         </header>
 
         {catalog.modelos.length > 0 && (
@@ -167,6 +190,7 @@ export default function Configurator({ catalog, loggedIn, initial, conditions }:
                 <span>
                   <strong>{m.name}</strong>
                   <small>{[m.m2 ? `${m.m2} m²` : '', m.description].filter(Boolean).join(' · ')}</small>
+                  {m.delivery_months > 0 && <small suppressHydrationWarning>{deliveryFrom(m.delivery_months)}</small>}
                 </span>
                 <span className="option-price">{formatPrice(m.price, cur)}</span>
               </button>
@@ -355,7 +379,13 @@ export default function Configurator({ catalog, loggedIn, initial, conditions }:
             )}
           </dl>
           {!discount && (
-            <form className="discount-form" onSubmit={applyCode}>
+            <form
+              className="discount-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                applyCode(codeInput);
+              }}
+            >
               <label htmlFor="discount-code" className="sr-only">Código de descuento</label>
               <input
                 id="discount-code"

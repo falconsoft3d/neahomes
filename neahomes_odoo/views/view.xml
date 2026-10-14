@@ -84,6 +84,7 @@
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="m2"/>
+                <field name="delivery_months"/>
                 <field name="description"/>
                 <field name="price"/>
             </tree>
@@ -99,6 +100,7 @@
                     <group>
                         <field name="name"/>
                         <field name="m2"/>
+                        <field name="delivery_months"/>
                         <field name="description"/>
                         <field name="image" widget="image" options="{'size': [360, 180]}"/>
                         <field name="price"/>
@@ -293,6 +295,8 @@
                 <field name="amount"/>
                 <field name="date_end"/>
                 <field name="description" optional="show"/>
+                <field name="partner_id" optional="show"/>
+                <field name="share_url" widget="CopyClipboardChar" readonly="1"/>
                 <field name="usage_count"/>
                 <field name="active" widget="boolean_toggle"/>
             </tree>
@@ -860,7 +864,21 @@
                             <field name="nea_password" password="True"
                                    readonly="nea_user and not nea_portal"/>
                         </group>
+                        <group string="Origen">
+                            <field name="nea_origen"/>
+                            <field name="nea_referente_id" invisible="nea_origen != 'recomendacion'"/>
+                            <field name="nea_codigo_origen" invisible="not nea_codigo_origen"/>
+                        </group>
                     </group>
+                    <separator string="Contactos recomendados" invisible="not nea_recomendado_ids"/>
+                    <field name="nea_recomendado_ids" readonly="1" invisible="not nea_recomendado_ids">
+                        <tree>
+                            <field name="name"/>
+                            <field name="email"/>
+                            <field name="nea_codigo_origen"/>
+                            <field name="create_date" string="Fecha"/>
+                        </tree>
+                    </field>
                     <field name="nea_cotizacion_ids" readonly="1">
                         <tree>
                             <field name="name"/>

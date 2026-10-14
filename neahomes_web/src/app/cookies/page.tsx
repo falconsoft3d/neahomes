@@ -10,6 +10,8 @@ const COOKIES = [
   { name: 'nea_role', purpose: 'Mostrar el acceso al CRM a los comerciales.', type: 'Técnica', duration: '30 días o hasta cerrar sesión' },
   { name: 'nea_consent', purpose: 'Recordar tu elección sobre las cookies.', type: 'Técnica', duration: '12 meses' },
   { name: 'neahomes_draft', purpose: 'Guardar en tu navegador (almacenamiento local) la casa que has diseñado hasta que te registras.', type: 'Técnica', duration: 'Hasta que guardas la cotización o borras los datos del navegador' },
+  { name: 'neahomes_conditions', purpose: 'Recordar (almacenamiento local) que aceptaste las condiciones de venta al diseñar, hasta guardar la cotización.', type: 'Técnica', duration: 'Hasta que guardas la cotización o borras los datos del navegador' },
+  { name: 'neahomes_ref', purpose: 'Recordar (almacenamiento local) el código del enlace de recomendación con el que llegaste, para aplicarlo y registrarlo al crear tu cuenta.', type: 'Técnica', duration: '30 días o hasta que te registras' },
 ];
 
 const BROWSERS = [

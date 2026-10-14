@@ -19,6 +19,11 @@ class ResPartner(models.Model):
                                help='Se guarda cifrada. Escribe una nueva para cambiarla.')
     nea_token = fields.Char(string='Token NeaHome', copy=False, groups='base.group_system')
     nea_cotizacion_ids = fields.One2many('neahomes.cotizacion', 'partner_id', string='Cotizaciones NeaHome')
+    nea_origen = fields.Selection([('web', 'Web'), ('recomendacion', 'Recomendación')], string='Origen',
+                                  copy=False, help='Cómo llegó el cliente a la web de NeaHomes.')
+    nea_referente_id = fields.Many2one('res.partner', string='Recomendado por', copy=False, ondelete='set null')
+    nea_codigo_origen = fields.Char(string='Código de recomendación', copy=False)
+    nea_recomendado_ids = fields.One2many('res.partner', 'nea_referente_id', string='Contactos recomendados')
     nea_ticket_ids = fields.One2many('neahomes.ticket', 'partner_id', string='Tickets NeaHome')
 
     _sql_constraints = [

@@ -281,6 +281,8 @@ class NeahomesApi(http.Controller):
             if err:
                 return err
         try:
+            # Si llegó con un enlace de recomendación (código con referente), queda registrado como origen.
+            referral = request.env['neahomes.descuento']._find_referral(body.get('ref_code'))
             partner = Partner.create({
                 'name': name,
                 'email': email,
@@ -288,6 +290,9 @@ class NeahomesApi(http.Controller):
                 'nea_user': user,
                 'nea_password': password,
                 'nea_portal': True,
+                'nea_origen': 'recomendacion' if referral else 'web',
+                'nea_referente_id': referral.partner_id.id or False,
+                'nea_codigo_origen': referral.code or False,
             })
             quote = None
             if body.get('selection'):

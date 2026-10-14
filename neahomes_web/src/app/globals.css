@@ -2066,6 +2066,18 @@ dl .total dd {
   color: var(--accent);
 }
 
+.card-delivery {
+  margin-top: -12px;
+  font-size: 13px;
+}
+
+.cfg-delivery {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--accent) !important;
+  font-weight: 500;
+}
+
 .card-monthly {
   margin-top: -12px;
 }

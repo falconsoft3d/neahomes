@@ -19,6 +19,13 @@ export function formatExtra(value: number, currency = 'EUR') {
   return value > 0 ? `+${formatPrice(value, currency)}` : 'Incluido';
 }
 
+/** «Entrega desde marzo de 2027»: hoy más los meses de entrega del modelo (vacío si no hay plazo). */
+export function deliveryFrom(months: number, today = new Date()) {
+  if (!months || months <= 0) return '';
+  const d = new Date(today.getFullYear(), today.getMonth() + months, 1);
+  return `Entrega desde ${d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`;
+}
+
 export function formatDate(value: string) {
   // Odoo envía fechas ('2026-10-14') o fechas con hora en UTC ('2026-10-14 08:00:00').
   const iso = /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T12:00:00Z` : `${value.replace(' ', 'T')}Z`;

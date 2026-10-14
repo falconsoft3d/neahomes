@@ -52,6 +52,9 @@ class NeahomesModelo(models.Model):
     _description = 'Modelo'
 
     m2 = fields.Integer(string='Metros cuadrados')
+    delivery_months = fields.Integer(string='Tiempo de entrega (meses)',
+                                     help='La web muestra «Entrega desde» sumando estos meses a la fecha de hoy. '
+                                          'Déjalo en 0 para no mostrarlo.')
     description = fields.Char(string='Descripción corta')
     image = fields.Image(string='Imagen', max_width=1920, max_height=1920)
     distribucion_ids = fields.One2many('neahomes.distribucion', 'modelo_id', string='Distribución')
@@ -63,5 +66,6 @@ class NeahomesModelo(models.Model):
 
     def _api_values(self):
         return dict(super()._api_values(), m2=self.m2, description=self.description or '',
+                    delivery_months=self.delivery_months,
                     image_version=self._image_version(),
                     distribuciones=[d._api_values() for d in self.distribucion_ids])

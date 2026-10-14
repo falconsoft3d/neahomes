@@ -177,6 +177,8 @@ class NeahomesCotizacion(models.Model):
             f'Acabado: {self.acabado_id.name} ({self.price_acabado:,.2f})',
             *[f'{d.name}: {d.cantidad}' for d in self.distribucion_ids],
             *([f'Comercial: {self.comercial_id.name}'] if self.comercial_id else []),
+            *([f'Recomendado por: {self.partner_id.nea_referente_id.name} (código {self.partner_id.nea_codigo_origen})']
+              if self.partner_id.nea_referente_id else []),
             *([f'Descuento {self.descuento_code}: -{self.discount_amount:,.2f}'] if self.discount_amount else []),
             f'Total: {self.amount_total:,.2f}',
             *([f'Financiado: {self.credito_plazo} meses, TIN {self.credito_tin:g} %, TAE {self.credito_tae:g} %, '
@@ -215,6 +217,7 @@ class NeahomesCotizacion(models.Model):
                 'expected_revenue': rec.amount_total,
                 'company_id': company.id,
                 'description': rec._summary().replace('\n', '<br/>'),
+                'referred': rec.partner_id.nea_referente_id.name or False,
             })
             rec.sudo().write({'lead_id': lead.id, 'company_id': company.id})
         return True

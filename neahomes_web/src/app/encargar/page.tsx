@@ -20,6 +20,7 @@ export default async function EncargarPage({ searchParams }: Props) {
     <Configurator
       catalog={catalog}
       loggedIn={Boolean(token)}
+      initialCode={params.codigo?.slice(0, 64)}
       conditions={conditions}
       initial={{
         modelo_id: num(params.modelo),
