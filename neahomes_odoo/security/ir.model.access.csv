@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_neahomes_tamano_user,neahomes.tamano.user,model_neahomes_tamano,base.group_user,1,1,1,1
+access_neahomes_cubierta_user,neahomes.cubierta.user,model_neahomes_cubierta,base.group_user,1,1,1,1
+access_neahomes_acabado_user,neahomes.acabado.user,model_neahomes_acabado,base.group_user,1,1,1,1
+access_neahomes_modelo_user,neahomes.modelo.user,model_neahomes_modelo,base.group_user,1,1,1,1

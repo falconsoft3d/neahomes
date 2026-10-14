@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Tamaño -->
+    <record id="view_neahomes_tamano_tree" model="ir.ui.view">
+        <field name="name">neahomes.tamano.tree</field>
+        <field name="model">neahomes.tamano</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_neahomes_tamano_form" model="ir.ui.view">
+        <field name="name">neahomes.tamano.form</field>
+        <field name="model">neahomes.tamano</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_neahomes_tamano" model="ir.actions.act_window">
+        <field name="name">Tamaño</field>
+        <field name="res_model">neahomes.tamano</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Cubierta -->
+    <record id="view_neahomes_cubierta_tree" model="ir.ui.view">
+        <field name="name">neahomes.cubierta.tree</field>
+        <field name="model">neahomes.cubierta</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_neahomes_cubierta_form" model="ir.ui.view">
+        <field name="name">neahomes.cubierta.form</field>
+        <field name="model">neahomes.cubierta</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_neahomes_cubierta" model="ir.actions.act_window">
+        <field name="name">Cubierta</field>
+        <field name="res_model">neahomes.cubierta</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Acabado -->
+    <record id="view_neahomes_acabado_tree" model="ir.ui.view">
+        <field name="name">neahomes.acabado.tree</field>
+        <field name="model">neahomes.acabado</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_neahomes_acabado_form" model="ir.ui.view">
+        <field name="name">neahomes.acabado.form</field>
+        <field name="model">neahomes.acabado</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_neahomes_acabado" model="ir.actions.act_window">
+        <field name="name">Acabados</field>
+        <field name="res_model">neahomes.acabado</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Modelo -->
+    <record id="view_neahomes_modelo_tree" model="ir.ui.view">
+        <field name="name">neahomes.modelo.tree</field>
+        <field name="model">neahomes.modelo</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_neahomes_modelo_form" model="ir.ui.view">
+        <field name="name">neahomes.modelo.form</field>
+        <field name="model">neahomes.modelo</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_neahomes_modelo" model="ir.actions.act_window">
+        <field name="name">Modelos</field>
+        <field name="res_model">neahomes.modelo</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menús: sequence 21 lo coloca justo después de Contactos (20) -->
+    <menuitem id="menu_neahomes_root"
+              name="NeaHomes"
+              sequence="21"
+              web_icon="neahomes_odoo,static/description/icon.png"/>
+
+    <menuitem id="menu_neahomes_tamano"
+              name="Tamaño"
+              parent="menu_neahomes_root"
+              action="action_neahomes_tamano"
+              sequence="10"/>
+    <menuitem id="menu_neahomes_cubierta"
+              name="Cubierta"
+              parent="menu_neahomes_root"
+              action="action_neahomes_cubierta"
+              sequence="20"/>
+    <menuitem id="menu_neahomes_acabado"
+              name="Acabados"
+              parent="menu_neahomes_root"
+              action="action_neahomes_acabado"
+              sequence="30"/>
+    <menuitem id="menu_neahomes_modelo"
+              name="Modelos"
+              parent="menu_neahomes_root"
+              action="action_neahomes_modelo"
+              sequence="40"/>
+</odoo>
