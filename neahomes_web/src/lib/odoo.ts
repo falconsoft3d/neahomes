@@ -1,6 +1,6 @@
 import 'server-only';
 import { cookies } from 'next/headers';
-import type { Catalog } from './types';
+import type { Catalog, Slide } from './types';
 
 export const TOKEN_COOKIE = 'nea_token';
 
@@ -39,6 +39,25 @@ export async function odooRaw(path: string): Promise<Response | null> {
   } catch {
     return null;
   }
+}
+
+/** Proxy de una imagen de Odoo: la URL pública lleva ?v=versión, así que se cachea como inmutable. */
+export async function imageProxy(odooPath: string, id: string, req: Request): Promise<Response> {
+  const width = new URL(req.url).searchParams.get('w') ?? '0';
+  if (!/^\d+$/.test(id) || !/^\d+$/.test(width)) return new Response(null, { status: 400 });
+  const res = await odooRaw(`${odooPath}/${id}/image?width=${width}`);
+  if (!res || !res.ok) return new Response(null, { status: res?.status ?? 503 });
+  return new Response(res.body, {
+    headers: {
+      'Content-Type': res.headers.get('Content-Type') ?? 'image/png',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    },
+  });
+}
+
+export async function getSlides(): Promise<Slide[]> {
+  const res = await odoo<{ slides: Slide[] }>('/slides');
+  return res.ok ? res.data.slides : [];
 }
 
 export async function getCatalog(): Promise<Catalog | null> {

@@ -8,6 +8,14 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_neahomes_ticket" model="ir.sequence">
+        <field name="name">Ticket NeaHomes</field>
+        <field name="code">neahomes.ticket</field>
+        <field name="prefix">TK</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="param_ci_company" model="neahomes.parametro">
         <field name="name">ci_company</field>
         <field name="valor">1</field>

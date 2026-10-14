@@ -53,16 +53,31 @@ class NeahomesApi(http.Controller):
         data['currency'] = request.env['neahomes.cotizacion'].sudo()._get_company().currency_id.name
         return self._json(data)
 
+    def _image_response(self, model, record_id, width, max_width):
+        record = request.env[model].sudo().browse(record_id).exists()
+        if not record or not record.active or not record.image:
+            return self._error('Imagen no encontrada', 404)
+        width = min(int(width), max_width) if str(width).isdigit() else 0
+        return request.env['ir.binary']._get_image_stream_from(record, 'image', width=width).get_response()
+
     @http.route('/neahomes/api/modelo/<int:modelo_id>/image', type='http', auth='public', methods=['GET'], csrf=False)
     def modelo_image(self, modelo_id, width=0, **kw):
         if (err := self._guard()):
             return err
-        modelo = request.env['neahomes.modelo'].sudo().browse(modelo_id).exists()
-        if not modelo or not modelo.active or not modelo.image:
-            return self._error('Imagen no encontrada', 404)
-        width = min(int(width), 1920) if str(width).isdigit() else 0
-        stream = request.env['ir.binary']._get_image_stream_from(modelo, 'image', width=width)
-        return stream.get_response()
+        return self._image_response('neahomes.modelo', modelo_id, width, 1920)
+
+    @http.route('/neahomes/api/slides', type='http', auth='public', methods=['GET'], csrf=False)
+    def slides(self, **kw):
+        if (err := self._guard()):
+            return err
+        slides = request.env['neahomes.slide'].sudo().search([], limit=3)
+        return self._json({'slides': [s._api_values() for s in slides]})
+
+    @http.route('/neahomes/api/slide/<int:slide_id>/image', type='http', auth='public', methods=['GET'], csrf=False)
+    def slide_image(self, slide_id, width=0, **kw):
+        if (err := self._guard()):
+            return err
+        return self._image_response('neahomes.slide', slide_id, width, 2560)
 
     @http.route('/neahomes/api/settings', type='http', auth='public', methods=['GET'], csrf=False)
     def settings(self, **kw):
@@ -153,7 +168,34 @@ class NeahomesApi(http.Controller):
         return self._json({
             'partner': partner._nea_api_values(),
             'quotes': [q._api_values() for q in partner.nea_cotizacion_ids],
+            'tickets': [t._api_values() for t in partner.nea_ticket_ids],
         })
+
+    @http.route('/neahomes/api/tickets', type='http', auth='public', methods=['POST'], csrf=False)
+    def create_ticket(self, **kw):
+        if (err := self._guard()):
+            return err
+        partner = self._partner()
+        if not partner:
+            return self._error('Sesión no válida', 401)
+        body = self._body()
+        title = (body.get('title') or '').strip()
+        description = (body.get('description') or '').strip()
+        if not (title and description):
+            return self._error('Título y texto son obligatorios.')
+        quote = request.env['neahomes.cotizacion']
+        if body.get('quote_id'):
+            # Solo se puede relacionar una cotización del propio cliente.
+            quote = partner.nea_cotizacion_ids.filtered(lambda q: str(q.id) == str(body['quote_id']))
+            if not quote:
+                return self._error('Cotización no válida.')
+        ticket = request.env['neahomes.ticket'].sudo().create({
+            'name': title,
+            'description': description,
+            'partner_id': partner.id,
+            'cotizacion_id': quote.id or False,
+        })
+        return self._json({'ticket': ticket._api_values()})
 
     @http.route('/neahomes/api/quotes', type='http', auth='public', methods=['POST'], csrf=False)
     def create_quote(self, **kw):

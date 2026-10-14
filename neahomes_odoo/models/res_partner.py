@@ -17,6 +17,7 @@ class ResPartner(models.Model):
                                help='Se guarda cifrada. Escribe una nueva para cambiarla.')
     nea_token = fields.Char(string='Token NeaHome', copy=False, groups='base.group_system')
     nea_cotizacion_ids = fields.One2many('neahomes.cotizacion', 'partner_id', string='Cotizaciones NeaHome')
+    nea_ticket_ids = fields.One2many('neahomes.ticket', 'partner_id', string='Tickets NeaHome')
 
     _sql_constraints = [
         ('nea_user_uniq', 'unique(nea_user)', 'El usuario NeaHome ya está en uso.'),

@@ -128,7 +128,8 @@
                 <field name="cubierta_id"/>
                 <field name="acabado_id"/>
                 <field name="amount_total" sum="Total"/>
-                <field name="stage_id"/>
+                <field name="state" widget="badge" decoration-info="state == 'nuevo'" decoration-warning="state == 'estudio'" decoration-success="state == 'aceptada'" decoration-danger="state == 'rechazada'"/>
+                <field name="stage_id" optional="hide"/>
                 <field name="company_id" groups="base.group_multi_company"/>
             </tree>
         </field>
@@ -140,9 +141,17 @@
         <field name="arch" type="xml">
             <form>
                 <header>
+                    <button name="action_estudio" type="object" string="Pasar a estudio"
+                            class="btn-primary" invisible="state != 'nuevo'"/>
+                    <button name="action_aceptar" type="object" string="Aceptar"
+                            class="btn-primary" invisible="state != 'estudio'"/>
+                    <button name="action_rechazar" type="object" string="Rechazar"
+                            invisible="state != 'estudio'"/>
+                    <button name="action_nuevo" type="object" string="Volver a nuevo"
+                            invisible="state == 'nuevo'"/>
                     <button name="action_create_lead" type="object" string="Crear oportunidad"
-                            class="btn-primary" invisible="lead_id"/>
-                    <field name="stage_id" widget="badge" invisible="not lead_id"/>
+                            invisible="lead_id"/>
+                    <field name="state" widget="statusbar" options="{'clickable': '1'}"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -152,6 +161,7 @@
                         <group>
                             <field name="partner_id"/>
                             <field name="lead_id"/>
+                            <field name="stage_id" invisible="not lead_id"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                         <group>
@@ -171,7 +181,19 @@
                             <field name="amount_total" class="fw-bold"/>
                         </group>
                     </group>
+                    <field name="ticket_ids" readonly="1" invisible="not ticket_ids">
+                        <tree>
+                            <field name="ref"/>
+                            <field name="create_date" string="Fecha"/>
+                            <field name="name"/>
+                            <field name="state" widget="badge" decoration-info="state == 'nuevo'" decoration-warning="state == 'trabajando'" decoration-success="state == 'resuelto'"/>
+                        </tree>
+                    </field>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
         </field>
     </record>
@@ -180,6 +202,156 @@
         <field name="name">Cotizaciones</field>
         <field name="res_model">neahomes.cotizacion</field>
         <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Tickets -->
+    <record id="view_neahomes_ticket_tree" model="ir.ui.view">
+        <field name="name">neahomes.ticket.tree</field>
+        <field name="model">neahomes.ticket</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="ref"/>
+                <field name="create_date" string="Fecha"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="cotizacion_id"/>
+                <field name="state" widget="badge" decoration-info="state == 'nuevo'" decoration-warning="state == 'trabajando'" decoration-success="state == 'resuelto'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_neahomes_ticket_kanban" model="ir.ui.view">
+        <field name="name">neahomes.ticket.kanban</field>
+        <field name="model">neahomes.ticket</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" quick_create="false" records_draggable="1">
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_title"><strong><field name="name"/></strong></div>
+                            <div class="text-muted"><field name="ref"/> · <field name="partner_id"/></div>
+                            <div t-if="record.cotizacion_id.raw_value"><field name="cotizacion_id"/></div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_neahomes_ticket_form" model="ir.ui.view">
+        <field name="name">neahomes.ticket.form</field>
+        <field name="model">neahomes.ticket</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_trabajando" type="object" string="Empezar a trabajar"
+                            class="btn-primary" invisible="state != 'nuevo'"/>
+                    <button name="action_resuelto" type="object" string="Marcar resuelto"
+                            class="btn-primary" invisible="state != 'trabajando'"/>
+                    <button name="action_nuevo" type="object" string="Reabrir"
+                            invisible="state != 'resuelto'"/>
+                    <field name="state" widget="statusbar" options="{'clickable': '1'}"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <div class="text-muted"><field name="ref"/></div>
+                        <h1><field name="name" placeholder="Título"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="cotizacion_id"/>
+                        </group>
+                        <group>
+                            <field name="create_date" string="Fecha"/>
+                        </group>
+                    </group>
+                    <field name="description" placeholder="Texto"/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_neahomes_ticket_search" model="ir.ui.view">
+        <field name="name">neahomes.ticket.search</field>
+        <field name="model">neahomes.ticket</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="ref"/>
+                <field name="partner_id"/>
+                <field name="cotizacion_id"/>
+                <filter name="abiertos" string="Abiertos" domain="[('state', '!=', 'resuelto')]"/>
+                <filter name="resueltos" string="Resueltos" domain="[('state', '=', 'resuelto')]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter name="group_state" string="Estado" context="{'group_by': 'state'}"/>
+                    <filter name="group_partner" string="Cliente" context="{'group_by': 'partner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_neahomes_ticket" model="ir.actions.act_window">
+        <field name="name">Tickets</field>
+        <field name="res_model">neahomes.ticket</field>
+        <field name="view_mode">kanban,tree,form</field>
+    </record>
+
+    <!-- Web: carrusel -->
+    <record id="view_neahomes_slide_tree" model="ir.ui.view">
+        <field name="name">neahomes.slide.tree</field>
+        <field name="model">neahomes.slide</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sequence" widget="handle"/>
+                <field name="image" widget="image" options="{'size': [96, 54]}"/>
+                <field name="name"/>
+                <field name="subtitle"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_neahomes_slide_form" model="ir.ui.view">
+        <field name="name">neahomes.slide.form</field>
+        <field name="model">neahomes.slide</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Archivado" bg_color="text-bg-danger" invisible="active"/>
+                    <field name="image" widget="image" options="{'size': [480, 270]}"/>
+                    <group>
+                        <group string="Textos">
+                            <field name="name"/>
+                            <field name="subtitle"/>
+                            <field name="text_theme" widget="radio"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="Botones">
+                            <field name="button1_text"/>
+                            <field name="button1_url"/>
+                            <field name="button2_text"/>
+                            <field name="button2_url"/>
+                        </group>
+                    </group>
+                    <div class="text-muted">
+                        Deja vacío el texto de un botón para ocultarlo. El carrusel muestra como máximo 3 slides activos.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_neahomes_slide" model="ir.actions.act_window">
+        <field name="name">Carrusel</field>
+        <field name="res_model">neahomes.slide</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'active_test': False}</field>
     </record>
 
     <!-- Formulario de contacto -->
@@ -267,7 +439,17 @@
                             <field name="cubierta_id"/>
                             <field name="acabado_id"/>
                             <field name="amount_total"/>
-                            <field name="stage_id"/>
+                            <field name="state" widget="badge" decoration-info="state == 'nuevo'" decoration-warning="state == 'estudio'" decoration-success="state == 'aceptada'" decoration-danger="state == 'rechazada'"/>
+                        </tree>
+                    </field>
+                    <separator string="Tickets"/>
+                    <field name="nea_ticket_ids" readonly="1">
+                        <tree>
+                            <field name="ref"/>
+                            <field name="create_date" string="Fecha"/>
+                            <field name="name"/>
+                            <field name="cotizacion_id"/>
+                            <field name="state" widget="badge" decoration-info="state == 'nuevo'" decoration-warning="state == 'trabajando'" decoration-success="state == 'resuelto'"/>
                         </tree>
                     </field>
                 </page>
@@ -289,8 +471,14 @@
               action="action_neahomes_acabado" sequence="30"/>
     <menuitem id="menu_neahomes_modelo" name="Modelos" parent="menu_neahomes_root"
               action="action_neahomes_modelo" sequence="10"/>
+    <menuitem id="menu_neahomes_ticket" name="Tickets" parent="menu_neahomes_root"
+              action="action_neahomes_ticket" sequence="7"/>
     <menuitem id="menu_neahomes_contacto" name="Formulario de contacto" parent="menu_neahomes_root"
               action="action_neahomes_contacto" sequence="50"/>
+
+    <menuitem id="menu_neahomes_web" name="Web" parent="menu_neahomes_root" sequence="90"/>
+    <menuitem id="menu_neahomes_slide" name="Carrusel" parent="menu_neahomes_web"
+              action="action_neahomes_slide" sequence="10"/>
 
     <menuitem id="menu_neahomes_config" name="Configuración" parent="menu_neahomes_root" sequence="100"/>
     <menuitem id="menu_neahomes_parametro" name="Parámetros" parent="menu_neahomes_config"

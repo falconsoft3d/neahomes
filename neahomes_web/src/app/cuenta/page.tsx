@@ -3,9 +3,10 @@ import { redirect } from 'next/navigation';
 import HouseIllustration from '@/components/HouseIllustration';
 import ModeloPhoto from '@/components/ModeloPhoto';
 import LogoutButton from '@/components/LogoutButton';
+import TicketForm from '@/components/TicketForm';
 import { getToken, odoo } from '@/lib/odoo';
 import { formatDate, formatPrice } from '@/lib/format';
-import type { Partner, Quote } from '@/lib/types';
+import type { Partner, Quote, Ticket } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,7 @@ export default async function CuentaPage({ searchParams }: Props) {
   const token = await getToken();
   if (!token) redirect('/login');
   const [res, catalog, { nueva }] = await Promise.all([
-    odoo<{ partner: Partner; quotes: Quote[] }>('/me', { token }),
+    odoo<{ partner: Partner; quotes: Quote[]; tickets: Ticket[] }>('/me', { token }),
     odoo<{ currency: string }>('/catalog'),
     searchParams,
   ]);
@@ -29,7 +30,7 @@ export default async function CuentaPage({ searchParams }: Props) {
       </div>
     );
   }
-  const { partner, quotes } = res.data;
+  const { partner, quotes, tickets } = res.data;
   const cur = catalog.data.currency ?? 'EUR';
 
   return (
@@ -69,7 +70,7 @@ export default async function CuentaPage({ searchParams }: Props) {
               <div className="quote-body">
                 <div className="quote-top">
                   <h3>{q.modelo}</h3>
-                  <span className="badge">{q.stage}</span>
+                  <span className={`badge badge-${q.state}`}>{q.state_label}</span>
                 </div>
                 <p className="muted">{q.name} · {formatDate(q.date)}</p>
                 <p>{[q.modelo_m2 ? `${q.modelo_m2} m²` : '', q.cubierta, q.acabado].filter(Boolean).join(' · ')}</p>
@@ -78,6 +79,30 @@ export default async function CuentaPage({ searchParams }: Props) {
             </article>
           ))}
         </div>
+      )}
+
+      <div className="account-section-head">
+        <h2 className="account-title">Mis tickets</h2>
+      </div>
+      <TicketForm quotes={quotes} />
+      {tickets.length === 0 ? (
+        <p className="muted tickets-empty">No tienes tickets abiertos.</p>
+      ) : (
+        <ul className="tickets">
+          {tickets.map((t) => (
+            <li key={t.id} className="ticket">
+              <div className="ticket-top">
+                <h3>{t.title}</h3>
+                <span className={`badge badge-${t.state}`}>{t.state_label}</span>
+              </div>
+              <p className="muted">
+                {t.ref} · {formatDate(t.date)}
+                {t.quote && <> · Cotización {t.quote}</>}
+              </p>
+              <p className="ticket-text">{t.description}</p>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

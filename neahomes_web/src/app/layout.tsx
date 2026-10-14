@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   title: 'NeaHomes · Casas prefabricadas llave en mano',
-  description: 'Diseña tu casa prefabricada, elige tamaño, cubierta y acabados y obtén tu precio cerrado al instante.',
+  description: 'Diseña tu casa prefabricada, elige modelo, cubierta y acabado y obtén tu precio cerrado al instante.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

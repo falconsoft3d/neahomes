@@ -241,6 +241,149 @@ button {
   margin-top: 24px;
 }
 
+/* --------------------------------------------------------------- carrusel */
+.carousel {
+  position: relative;
+  height: calc(100vh - var(--header-h));
+  min-height: 520px;
+  max-height: 900px;
+  overflow: hidden;
+  background: var(--soft);
+  color: #fff;
+}
+
+.carousel.theme-oscuro {
+  color: var(--text);
+}
+
+.carousel-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.8s var(--ease);
+}
+
+.carousel-slide.is-active {
+  opacity: 1;
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Degradado suave arriba para que el texto se lea sobre cualquier foto. */
+.carousel.theme-claro .carousel-slide::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 45%;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0));
+}
+
+.carousel-copy {
+  position: relative;
+  z-index: 2;
+  padding: 9vh 24px 0;
+  text-align: center;
+  animation: house-fade 0.6s var(--ease);
+}
+
+.carousel-copy h1 {
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 1.1;
+}
+
+.carousel-copy p {
+  margin-top: 8px;
+  font-size: 17px;
+}
+
+.carousel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.btn-white {
+  background: #fff;
+  color: var(--text);
+}
+
+.btn-white:hover {
+  background: #f0f0f0;
+}
+
+.carousel-arrow {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--text);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease), background-color 0.3s var(--ease);
+}
+
+.carousel:hover .carousel-arrow,
+.carousel-arrow:focus-visible {
+  opacity: 1;
+}
+
+.carousel-arrow:hover {
+  background: #fff;
+}
+
+.carousel-arrow.prev {
+  left: 48px;
+}
+
+.carousel-arrow.next {
+  right: 48px;
+}
+
+.carousel-dots {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+.carousel-dots button {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: background-color 0.3s var(--ease);
+}
+
+.carousel-dots button.is-active {
+  background: #fff;
+}
+
+.carousel-arrow:focus-visible,
+.carousel-dots button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* --------------------------------------------------------------- sections */
 .section {
   max-width: 1200px;
@@ -967,6 +1110,126 @@ dl .total dd {
   white-space: nowrap;
 }
 
+/* Estados: cotización (nuevo, estudio, aceptada, rechazada) y ticket (nuevo, trabajando, resuelto) */
+.badge-nuevo {
+  background: #eef3fb;
+  border-color: #d6e2f5;
+  color: #2b5aa8;
+}
+
+.badge-estudio,
+.badge-trabajando {
+  background: #fdf5e6;
+  border-color: #f3e0b8;
+  color: #8a5a00;
+}
+
+.badge-aceptada,
+.badge-resuelto {
+  background: #e8f6f4;
+  border-color: #c4e8e3;
+  color: #12665d;
+}
+
+.badge-rechazada {
+  background: #fcecea;
+  border-color: #f4cfcb;
+  color: #a2281f;
+}
+
+.ticket-new {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ticket-new .notice {
+  margin-top: 0;
+}
+
+.ticket-form {
+  max-width: 560px;
+  padding: 24px;
+  margin-bottom: 24px;
+  background: var(--soft);
+  border-radius: var(--radius-lg);
+}
+
+.ticket-form h3 {
+  font-size: 20px;
+}
+
+.ticket-form input,
+.ticket-form textarea,
+.ticket-form select {
+  background: #fff;
+}
+
+.auth-form select {
+  height: 40px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
+.ticket-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ticket-form-actions .btn {
+  min-width: 160px;
+}
+
+.tickets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ticket {
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ticket-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.ticket-top h3 {
+  font-size: 17px;
+}
+
+.ticket-text {
+  white-space: pre-line;
+}
+
+.tickets-empty {
+  margin-top: 4px;
+}
+
+.account-section-head {
+  margin-top: 56px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
 .quote-total {
   margin-top: 8px;
   font-size: 20px;
@@ -1040,6 +1303,20 @@ dl .total dd {
 
   .header-account span {
     display: none;
+  }
+
+  .carousel {
+    min-height: 560px;
+  }
+
+  .carousel-arrow {
+    display: none;
+  }
+
+  .carousel-actions .btn {
+    min-width: 0;
+    width: 100%;
+    max-width: 320px;
   }
 
   .hero {

@@ -17,6 +17,18 @@ export type Selection = {
   acabado_id: number;
 };
 
+export type Slide = {
+  id: number;
+  title: string;
+  subtitle: string;
+  theme: 'claro' | 'oscuro';
+  image_version: number;
+  button1_text: string;
+  button1_url: string;
+  button2_text: string;
+  button2_url: string;
+};
+
 export type Partner = { id: number; name: string; email: string; phone: string; user: string };
 
 export type Quote = {
@@ -32,5 +44,17 @@ export type Quote = {
   cubierta_forma: Forma;
   modelo_m2: number;
   amount_total: number;
-  stage: string;
+  state: 'nuevo' | 'estudio' | 'aceptada' | 'rechazada';
+  state_label: string;
+};
+
+export type Ticket = {
+  id: number;
+  ref: string;
+  title: string;
+  description: string;
+  state: 'nuevo' | 'trabajando' | 'resuelto';
+  state_label: string;
+  date: string;
+  quote: string;
 };

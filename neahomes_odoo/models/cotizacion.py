@@ -1,8 +1,16 @@
 from odoo import api, fields, models
 
+QUOTE_STATES = [
+    ('nuevo', 'Nuevo'),
+    ('estudio', 'En estudio'),
+    ('aceptada', 'Aceptada'),
+    ('rechazada', 'Rechazada'),
+]
+
 
 class NeahomesCotizacion(models.Model):
     _name = 'neahomes.cotizacion'
+    _inherit = ['mail.thread']
     _description = 'Cotización NeaHomes'
     _order = 'id desc'
 
@@ -17,7 +25,9 @@ class NeahomesCotizacion(models.Model):
     price_acabado = fields.Float(string='Precio acabado', digits='Product Price')
     amount_total = fields.Float(string='Total', digits='Product Price',
                                 compute='_compute_amount_total', store=True)
+    state = fields.Selection(QUOTE_STATES, string='Estado', default='nuevo', required=True, tracking=True)
     lead_id = fields.Many2one('crm.lead', string='Oportunidad', ondelete='set null')
+    ticket_ids = fields.One2many('neahomes.ticket', 'cotizacion_id', string='Tickets')
     stage_id = fields.Many2one(related='lead_id.stage_id', string='Etapa')
     company_id = fields.Many2one('res.company', string='Compañía')
 
@@ -32,6 +42,18 @@ class NeahomesCotizacion(models.Model):
             if vals.get('name', 'Nuevo') == 'Nuevo':
                 vals['name'] = self.env['ir.sequence'].sudo().next_by_code('neahomes.cotizacion') or 'Nuevo'
         return super().create(vals_list)
+
+    def action_estudio(self):
+        self.write({'state': 'estudio'})
+
+    def action_aceptar(self):
+        self.write({'state': 'aceptada'})
+
+    def action_rechazar(self):
+        self.write({'state': 'rechazada'})
+
+    def action_nuevo(self):
+        self.write({'state': 'nuevo'})
 
     def _get_company(self):
         param = self.env['neahomes.parametro'].get_param('ci_company', '1')
@@ -101,5 +123,6 @@ class NeahomesCotizacion(models.Model):
             'cubierta_forma': self.cubierta_id.forma,
             'modelo_m2': self.modelo_id.m2,
             'amount_total': self.amount_total,
-            'stage': self.sudo().lead_id.stage_id.name or 'Recibida',
+            'state': self.state,
+            'state_label': dict(QUOTE_STATES)[self.state],
         }

@@ -3,3 +3,5 @@ from . import parametro
 from . import cotizacion
 from . import res_partner
 from . import contacto
+from . import ticket
+from . import slide

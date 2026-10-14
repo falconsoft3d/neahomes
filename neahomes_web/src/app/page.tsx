@@ -1,20 +1,21 @@
 import Link from 'next/link';
 import HouseIllustration from '@/components/HouseIllustration';
+import HeroCarousel from '@/components/HeroCarousel';
 import ModeloPhoto from '@/components/ModeloPhoto';
-import { getCatalog } from '@/lib/odoo';
+import { getCatalog, getSlides } from '@/lib/odoo';
 import { formatPrice } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
 const INCLUDED = ['Casa', 'Transporte', 'Montaje', 'Climatización', 'Garantía 2 años'];
 const STEPS = [
-  { n: '01', title: 'Diseña', text: 'Elige modelo, tamaño, cubierta y acabado. Ves el precio al instante.' },
+  { n: '01', title: 'Diseña', text: 'Elige modelo, cubierta y acabado. Ves el precio al instante.' },
   { n: '02', title: 'Guarda tu cotización', text: 'Crea tu cuenta y tu diseño queda guardado con su precio cerrado.' },
   { n: '03', title: 'Seguimiento', text: 'Un asesor te contacta y sigues el avance de tu casa desde tu cuenta.' },
 ];
 
 export default async function Home() {
-  const catalog = await getCatalog();
+  const [catalog, slides] = await Promise.all([getCatalog(), getSlides()]);
   const cur = catalog?.currency ?? 'EUR';
   const min = (items?: { price: number }[]) => (items?.length ? Math.min(...items.map((i) => i.price)) : 0);
   // Precio "desde" de un modelo: su precio más la cubierta y el acabado más baratos.
@@ -24,6 +25,10 @@ export default async function Home() {
 
   return (
     <>
+      {/* Con slides configurados en Odoo (NeaHomes > Web > Carrusel) la portada es un carrusel. */}
+      {slides.length > 0 ? (
+        <HeroCarousel slides={slides} />
+      ) : (
       <section className="hero">
         <div className="hero-copy">
           <p className="eyebrow">Llave en mano · Precio cerrado</p>
@@ -36,6 +41,7 @@ export default async function Home() {
         </div>
         <HouseIllustration className="hero-house" m2={70} forma="dos_aguas" color="#23272d" showDimension={false} />
       </section>
+      )}
 
       {catalog && catalog.modelos.length > 0 && (
         <section id="modelos" className="section">
