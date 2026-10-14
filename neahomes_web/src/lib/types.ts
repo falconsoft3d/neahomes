@@ -5,11 +5,34 @@ export type Forma = 'dos_aguas' | 'un_agua' | 'plana' | 'transitable';
 export type Cubierta = CatalogItem & { forma: Forma };
 export type Acabado = CatalogItem & { color: string };
 
+export type Discount = { code: string; amount: number; date_end: string | null };
+
+export type Credit = {
+  id: number;
+  name: string;
+  tin: number;
+  tae: number;
+  plazo: number;
+  plazo_min: number;
+  plazo_max: number;
+  is_default: boolean;
+};
+
+export type Payment = { tipo: 'contado' } | { tipo: 'financiado'; credito_id: number; plazo: number };
+
+/** Forma de pago guardada en la cotización (TIN, TAE y plazo del momento de cotizar). */
+export type QuotePayment =
+  | { tipo: 'contado' }
+  | { tipo: 'financiado'; credito: string; tin: number; tae: number; plazo: number; cuota: number; intereses: number; total: number };
+
+export type PaymentRow = { mes: number; cuota: number; intereses: number; amortizacion: number; pendiente: number };
+
 export type Catalog = {
   modelos: Modelo[];
   cubiertas: Cubierta[];
   acabados: Acabado[];
   currency: string;
+  creditos: Credit[];
 };
 
 export type Selection = {
@@ -18,6 +41,11 @@ export type Selection = {
   acabado_id: number;
   /** Cantidad elegida por distribución (id → 0..max). */
   distribuciones?: Record<number, number>;
+  pago?: Payment;
+  /** Código de descuento (Odoo lo vuelve a validar al guardar). */
+  descuento?: string;
+  /** Solo para mostrar el descuento en el resumen del registro; Odoo no lo usa. */
+  descuento_importe?: number;
 };
 
 export type Slide = {
@@ -88,6 +116,9 @@ export type Quote = {
   state: QuoteState;
   state_label: string;
   comercial: string;
+  pago: QuotePayment;
+  plan_pagos: PaymentRow[];
+  descuento: { code: string; amount: number } | null;
 };
 
 export type QuoteState = 'nuevo' | 'estudio' | 'aceptada' | 'rechazada';

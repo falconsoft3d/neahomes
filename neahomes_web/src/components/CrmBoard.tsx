@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { formatDate, formatPrice } from '@/lib/format';
+import { formatDate, formatMoney, formatPrice } from '@/lib/format';
 import type { CrmQuote, QuoteState } from '@/lib/types';
 
 type Props = { states: { key: QuoteState; label: string }[]; quotes: CrmQuote[]; currency: string };
@@ -88,6 +88,14 @@ export default function CrmBoard({ states, quotes, currency }: Props) {
                   {q.distribuciones.length > 0 && (
                     <p className="muted">{q.distribuciones.map((d) => `${d.name}: ${d.cantidad}`).join(' · ')}</p>
                   )}
+                  {q.descuento && (
+                    <p className="muted">Descuento {q.descuento.code}: −{formatPrice(q.descuento.amount, currency)}</p>
+                  )}
+                  <p className="muted">
+                    {q.pago?.tipo === 'financiado'
+                      ? `Financiado · ${formatMoney(q.pago.cuota, currency)}/mes · ${q.pago.plazo} meses`
+                      : 'Al contado'}
+                  </p>
                   <div className="crm-card-bottom">
                     <span className="crm-total">{formatPrice(q.amount_total, currency)}</span>
                     <label className="sr-only" htmlFor={`move-${q.id}`}>Mover {q.name}</label>

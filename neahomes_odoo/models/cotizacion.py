@@ -1,4 +1,8 @@
+from markupsafe import Markup
+
 from odoo import api, fields, models
+
+from .credito import NOTA_SIMULACION, cuota_mensual, plan_de_pagos
 
 QUOTE_STATES = [
     ('nuevo', 'Nuevo'),
@@ -23,8 +27,28 @@ class NeahomesCotizacion(models.Model):
     price_modelo = fields.Float(string='Precio modelo', digits='Product Price')
     price_cubierta = fields.Float(string='Precio cubierta', digits='Product Price')
     price_acabado = fields.Float(string='Precio acabado', digits='Product Price')
+    descuento_id = fields.Many2one('neahomes.descuento', string='Código de descuento', ondelete='set null',
+                                   context={'active_test': False})
+    descuento_code = fields.Char(string='Código aplicado')
+    discount_amount = fields.Float(string='Descuento', digits='Product Price')
     amount_total = fields.Float(string='Total', digits='Product Price',
                                 compute='_compute_amount_total', store=True)
+    # Forma de pago. Si es financiado se guardan TIN, TAE y plazo del momento de cotizar:
+    # cambiar el plan de crédito después no altera esta simulación.
+    tipo_pago = fields.Selection([('contado', 'Al contado'), ('financiado', 'Financiado')],
+                                 string='Forma de pago', default='contado', required=True, tracking=True)
+    credito_id = fields.Many2one('neahomes.credito', string='Plan de crédito', ondelete='set null',
+                                 context={'active_test': False})
+    credito_tin = fields.Float(string='TIN (%)', digits=(5, 3))
+    credito_tae = fields.Float(string='TAE (%)', digits=(5, 3))
+    credito_plazo = fields.Integer(string='Plazo (meses)')
+    cuota_mensual = fields.Float(string='Cuota mensual', digits='Product Price',
+                                 compute='_compute_financiacion', store=True)
+    total_intereses = fields.Float(string='Total intereses', digits='Product Price',
+                                   compute='_compute_financiacion', store=True)
+    total_financiado = fields.Float(string='Importe total a pagar', digits='Product Price',
+                                    compute='_compute_financiacion', store=True)
+    plan_pago_html = fields.Html(string='Plan de pagos', compute='_compute_plan_pago_html', sanitize=False)
     state = fields.Selection(QUOTE_STATES, string='Estado', default='nuevo', required=True, tracking=True)
     comercial_id = fields.Many2one('res.partner', string='Comercial', tracking=True, ondelete='set null',
                                    domain=[('nea_comercial', '=', True)])
@@ -35,10 +59,11 @@ class NeahomesCotizacion(models.Model):
     stage_id = fields.Many2one(related='lead_id.stage_id', string='Etapa')
     company_id = fields.Many2one('res.company', string='Compañía')
 
-    @api.depends('price_modelo', 'price_cubierta', 'price_acabado')
+    @api.depends('price_modelo', 'price_cubierta', 'price_acabado', 'discount_amount')
     def _compute_amount_total(self):
         for rec in self:
-            rec.amount_total = rec.price_modelo + rec.price_cubierta + rec.price_acabado
+            subtotal = rec.price_modelo + rec.price_cubierta + rec.price_acabado
+            rec.amount_total = max(subtotal - rec.discount_amount, 0.0)
 
     @api.model
     def _next_comercial(self, after=None):
@@ -60,6 +85,72 @@ class NeahomesCotizacion(models.Model):
                 last = self._next_comercial(after=last)
                 vals['comercial_id'] = last.id or False
         return super().create(vals_list)
+
+    @api.depends('tipo_pago', 'amount_total', 'credito_tin', 'credito_plazo')
+    def _compute_financiacion(self):
+        for rec in self:
+            if rec.tipo_pago == 'financiado' and rec.credito_plazo > 0:
+                filas = plan_de_pagos(rec.amount_total, rec.credito_tin, rec.credito_plazo)
+                rec.cuota_mensual = round(cuota_mensual(rec.amount_total, rec.credito_tin, rec.credito_plazo), 2)
+                rec.total_financiado = round(sum(f[1] for f in filas), 2)
+                rec.total_intereses = round(rec.total_financiado - rec.amount_total, 2)
+            else:
+                rec.cuota_mensual = rec.total_intereses = rec.total_financiado = 0.0
+
+    def _plan_de_pagos(self):
+        self.ensure_one()
+        if self.tipo_pago != 'financiado' or self.credito_plazo <= 0:
+            return []
+        return plan_de_pagos(self.amount_total, self.credito_tin, self.credito_plazo)
+
+    @api.depends('tipo_pago', 'amount_total', 'credito_tin', 'credito_plazo')
+    def _compute_plan_pago_html(self):
+        for rec in self:
+            filas = rec._plan_de_pagos()
+            if not filas:
+                rec.plan_pago_html = False
+                continue
+            body = ''.join(
+                f'<tr><td>{m}</td><td class="text-end">{c:,.2f}</td><td class="text-end">{i:,.2f}</td>'
+                f'<td class="text-end">{a:,.2f}</td><td class="text-end">{p:,.2f}</td></tr>'
+                for m, c, i, a, p in filas)
+            rec.plan_pago_html = Markup(
+                f'<p class="text-muted">{NOTA_SIMULACION}</p>'
+                '<table class="table table-sm"><thead><tr><th>Mes</th><th class="text-end">Cuota</th>'
+                '<th class="text-end">Intereses</th><th class="text-end">Amortización</th>'
+                f'<th class="text-end">Pendiente</th></tr></thead><tbody>{body}</tbody></table>')
+
+    @api.model
+    def _payment_vals(self, pago):
+        """Valida la forma de pago elegida en la web: {'tipo': 'contado'|'financiado', 'credito_id', 'plazo'}."""
+        pago = pago or {}
+        if not isinstance(pago, dict) or pago.get('tipo', 'contado') == 'contado':
+            return {'tipo_pago': 'contado'}
+        if pago.get('tipo') != 'financiado':
+            raise ValueError('Forma de pago no válida.')
+        credito = self.env['neahomes.credito'].sudo().browse(int(pago.get('credito_id') or 0)).exists()
+        if not credito or not credito.active:
+            raise ValueError('El plan de crédito elegido ya no está disponible.')
+        try:
+            plazo = int(pago.get('plazo') or credito.plazo)
+        except (TypeError, ValueError):
+            raise ValueError('Plazo no válido.')
+        if not credito.plazo_min <= plazo <= credito.plazo_max:
+            raise ValueError(f'El plazo debe estar entre {credito.plazo_min} y {credito.plazo_max} meses.')
+        return {
+            'tipo_pago': 'financiado', 'credito_id': credito.id,
+            'credito_tin': credito.tin, 'credito_tae': credito.tae, 'credito_plazo': plazo,
+        }
+
+    def _payment_api_values(self):
+        self.ensure_one()
+        if self.tipo_pago != 'financiado':
+            return {'tipo': 'contado'}
+        return {
+            'tipo': 'financiado', 'credito': self.credito_id.name or '',
+            'tin': self.credito_tin, 'tae': self.credito_tae, 'plazo': self.credito_plazo,
+            'cuota': self.cuota_mensual, 'intereses': self.total_intereses, 'total': self.total_financiado,
+        }
 
     def action_estudio(self):
         self.write({'state': 'estudio'})
@@ -86,7 +177,11 @@ class NeahomesCotizacion(models.Model):
             f'Acabado: {self.acabado_id.name} ({self.price_acabado:,.2f})',
             *[f'{d.name}: {d.cantidad}' for d in self.distribucion_ids],
             *([f'Comercial: {self.comercial_id.name}'] if self.comercial_id else []),
+            *([f'Descuento {self.descuento_code}: -{self.discount_amount:,.2f}'] if self.discount_amount else []),
             f'Total: {self.amount_total:,.2f}',
+            *([f'Financiado: {self.credito_plazo} meses, TIN {self.credito_tin:g} %, TAE {self.credito_tae:g} %, '
+               f'cuota {self.cuota_mensual:,.2f}/mes ({NOTA_SIMULACION})']
+              if self.tipo_pago == 'financiado' else ['Forma de pago: al contado']),
         ])
 
     def _lead_salesperson(self, company):
@@ -127,7 +222,8 @@ class NeahomesCotizacion(models.Model):
     @api.model
     def create_from_selection(self, partner, selection):
         """selection: dict con modelo_id, cubierta_id, acabado_id y opcionalmente
-        distribuciones = {distribucion_id: cantidad} (de 0 al número máximo de cada una)."""
+        distribuciones = {distribucion_id: cantidad} (de 0 al número máximo de cada una)
+        y pago = {'tipo': 'contado'|'financiado', 'credito_id', 'plazo'}."""
         records = {}
         for key, model in (('modelo_id', 'neahomes.modelo'), ('cubierta_id', 'neahomes.cubierta'),
                            ('acabado_id', 'neahomes.acabado')):
@@ -148,7 +244,18 @@ class NeahomesCotizacion(models.Model):
                 raise ValueError(f'{dist.name}: elige entre 0 y {dist.numero}')
             if qty:
                 dist_lines.append((0, 0, {'distribucion_id': dist.id, 'name': dist.name, 'cantidad': qty}))
+        payment = self._payment_vals(selection.get('pago'))
+        discount = {}
+        code = (selection.get('descuento') or '').strip()
+        if code:
+            descuento = self.env['neahomes.descuento']._find_valid(code)
+            if not descuento:
+                raise ValueError(f'El código de descuento «{code}» no es válido o ha caducado.')
+            discount = {'descuento_id': descuento.id, 'descuento_code': descuento.code,
+                        'discount_amount': descuento.amount}
         quote = self.sudo().create({
+            **payment,
+            **discount,
             'distribucion_ids': dist_lines,
             'partner_id': partner.id,
             'modelo_id': records['modelo_id'].id,
@@ -180,6 +287,10 @@ class NeahomesCotizacion(models.Model):
             'state': self.state,
             'state_label': dict(QUOTE_STATES)[self.state],
             'comercial': self.comercial_id.name or '',
+            'pago': self._payment_api_values(),
+            'descuento': {'code': self.descuento_code, 'amount': self.discount_amount} if self.discount_amount else None,
+            'plan_pagos': [{'mes': m, 'cuota': c, 'intereses': i, 'amortizacion': a, 'pendiente': p}
+                           for m, c, i, a, p in self._plan_de_pagos()],
         }
 
     def _crm_values(self):

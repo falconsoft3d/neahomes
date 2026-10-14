@@ -111,6 +111,7 @@ class NeahomesApi(http.Controller):
             for key, model in CATALOGS.items()
         }
         data['currency'] = request.env['neahomes.cotizacion'].sudo()._get_company().currency_id.name
+        data['creditos'] = [c._api_values() for c in request.env['neahomes.credito'].sudo().search([])]
         return self._json(data)
 
     def _image_response(self, model, record_id, width, max_width, domain=None):
@@ -248,6 +249,16 @@ class NeahomesApi(http.Controller):
             return err
         current = request.env['neahomes.condicion']._current()
         return self._json({'conditions': current._api_values() if current else None})
+
+    @http.route('/neahomes/api/discount', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
+    def discount(self, code=None, **kw):
+        if (err := self._guard()):
+            return err
+        descuento = request.env['neahomes.descuento']._find_valid(code)
+        if not descuento:
+            return self._error('El código no es válido o ha caducado.', 404)
+        return self._json({'discount': descuento._api_values()})
 
     @http.route('/neahomes/api/register', type='http', auth='public', methods=['POST'], csrf=False)
     @json_errors

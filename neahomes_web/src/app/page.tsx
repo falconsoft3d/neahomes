@@ -3,7 +3,8 @@ import HouseIllustration from '@/components/HouseIllustration';
 import HeroCarousel from '@/components/HeroCarousel';
 import ModeloPhoto from '@/components/ModeloPhoto';
 import { getCatalog, getSlides } from '@/lib/odoo';
-import { formatPrice } from '@/lib/format';
+import { CREDIT_NOTE, defaultCredit, formatMonths, formatPercent, monthlyPayment } from '@/lib/credit';
+import { formatMoney, formatPrice } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,9 @@ export default async function Home() {
   const min = (items?: { price: number }[]) => (items?.length ? Math.min(...items.map((i) => i.price)) : 0);
   // Precio "desde" de un modelo: su precio más la cubierta y el acabado más baratos.
   const extras = catalog ? min(catalog.cubiertas) + min(catalog.acabados) : 0;
+  // Cuota «desde» con el plan de crédito por defecto: se calcula con los precios actuales.
+  const credit = catalog ? defaultCredit(catalog.creditos ?? []) : null;
+  const monthly = (price: number) => (credit ? monthlyPayment(price, credit.tin, credit.plazo) : 0);
   const acabado = catalog?.acabados[0];
 
   return (
@@ -32,7 +36,12 @@ export default async function Home() {
         <div className="hero-copy">
           <p className="eyebrow">Llave en mano · Precio cerrado</p>
           <h1>Tu casa prefabricada, sin letra pequeña.</h1>
-          {catalog?.modelos.length ? <p className="hero-sub">Desde {formatPrice(min(catalog.modelos) + extras, cur)}</p> : null}
+          {catalog?.modelos.length ? (
+            <p className="hero-sub">
+              Desde {formatPrice(min(catalog.modelos) + extras, cur)}
+              {credit && <> o {formatMoney(monthly(min(catalog.modelos) + extras), cur)}/mes*</>}
+            </p>
+          ) : null}
           <div className="hero-actions">
             <Link href="/encargar" className="btn btn-primary">Encargar casa</Link>
             <Link href="#modelos" className="btn btn-light">Ver modelos</Link>
@@ -59,11 +68,18 @@ export default async function Home() {
                 <div className="card-body">
                   <h3>{m.name}</h3>
                   <p>{[m.m2 ? `${m.m2} m²` : '', `Desde ${formatPrice(m.price + extras, cur)}`].filter(Boolean).join(' · ')}</p>
+                  {credit && <p className="card-monthly">o <strong>{formatMoney(monthly(m.price + extras), cur)}/mes</strong>*</p>}
                   <Link href={`/encargar?modelo=${m.id}`} className="btn btn-primary btn-sm">Encargar</Link>
                 </div>
               </article>
             ))}
           </div>
+          {credit && (
+            <p className="fine credit-note">
+              * Cuota con «{credit.name}»: TIN {formatPercent(credit.tin)}, TAE {formatPercent(credit.tae)},{' '}
+              {formatMonths(credit.plazo)}. {CREDIT_NOTE}
+            </p>
+          )}
         </section>
       )}
 

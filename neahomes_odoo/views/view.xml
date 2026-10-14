@@ -137,6 +137,8 @@
                 <field name="cubierta_id"/>
                 <field name="acabado_id"/>
                 <field name="amount_total" sum="Total"/>
+                <field name="tipo_pago" optional="show"/>
+                <field name="cuota_mensual" optional="show" invisible="tipo_pago != 'financiado'"/>
                 <field name="state" widget="badge" decoration-info="state == 'nuevo'" decoration-warning="state == 'estudio'" decoration-success="state == 'aceptada'" decoration-danger="state == 'rechazada'"/>
                 <field name="stage_id" optional="hide"/>
                 <field name="company_id" groups="base.group_multi_company"/>
@@ -178,6 +180,20 @@
                             <field name="create_date" string="Fecha"/>
                         </group>
                     </group>
+                    <group string="Forma de pago">
+                        <group>
+                            <field name="tipo_pago"/>
+                            <field name="credito_id" invisible="tipo_pago != 'financiado'"/>
+                            <field name="credito_plazo" invisible="tipo_pago != 'financiado'"/>
+                            <field name="credito_tin" invisible="tipo_pago != 'financiado'"/>
+                            <field name="credito_tae" invisible="tipo_pago != 'financiado'"/>
+                        </group>
+                        <group invisible="tipo_pago != 'financiado'">
+                            <field name="cuota_mensual" class="fw-bold"/>
+                            <field name="total_intereses"/>
+                            <field name="total_financiado"/>
+                        </group>
+                    </group>
                     <group string="Configuración">
                         <group>
                             <field name="modelo_id"/>
@@ -188,8 +204,13 @@
                             <field name="price_modelo"/>
                             <field name="price_cubierta"/>
                             <field name="price_acabado"/>
+                            <field name="descuento_code" invisible="not discount_amount"/>
+                            <field name="discount_amount" invisible="not discount_amount"/>
                             <field name="amount_total" class="fw-bold"/>
                         </group>
+                    </group>
+                    <group string="Plan de pagos (simulación)" invisible="tipo_pago != 'financiado'">
+                        <field name="plan_pago_html" nolabel="1" colspan="2" readonly="1"/>
                     </group>
                     <group string="Condiciones de venta aceptadas" invisible="not aceptacion_ids">
                         <field name="aceptacion_ids" nolabel="1" colspan="2" readonly="1">
@@ -229,6 +250,64 @@
         <field name="name">Cotizaciones</field>
         <field name="res_model">neahomes.cotizacion</field>
         <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Crédito -->
+    <record id="view_neahomes_credito_tree" model="ir.ui.view">
+        <field name="name">neahomes.credito.tree</field>
+        <field name="model">neahomes.credito</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="tin"/>
+                <field name="tae"/>
+                <field name="plazo"/>
+                <field name="plazo_min" optional="show"/>
+                <field name="plazo_max" optional="show"/>
+                <field name="is_default" widget="boolean_toggle"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_neahomes_credito" model="ir.actions.act_window">
+        <field name="name">Crédito</field>
+        <field name="res_model">neahomes.credito</field>
+        <field name="view_mode">tree</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crea tu primer plan de crédito</p>
+            <p>Indica TIN, TAE y plazos. El plan «Por defecto» calcula la cuota «desde» de la portada;
+               en el diseñador el cliente elige plan y meses. Siempre se muestra como simulación sujeta a aprobación.</p>
+        </field>
+    </record>
+
+    <!-- Códigos de descuento -->
+    <record id="view_neahomes_descuento_tree" model="ir.ui.view">
+        <field name="name">neahomes.descuento.tree</field>
+        <field name="model">neahomes.descuento</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom" decoration-muted="not active">
+                <field name="code"/>
+                <field name="amount"/>
+                <field name="date_end"/>
+                <field name="description" optional="show"/>
+                <field name="usage_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_neahomes_descuento" model="ir.actions.act_window">
+        <field name="name">Códigos de descuento</field>
+        <field name="res_model">neahomes.descuento</field>
+        <field name="view_mode">tree</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crea tu primer código de descuento</p>
+            <p>El cliente lo escribe en el diseñador y se resta el importe del total mientras esté habilitado y no haya vencido.</p>
+        </field>
     </record>
 
     <!-- Distribución -->
@@ -837,6 +916,12 @@
               action="action_neahomes_cubierta" sequence="30"/>
     <menuitem id="menu_neahomes_acabado" name="Acabados" parent="menu_neahomes_diseno"
               action="action_neahomes_acabado" sequence="40"/>
+
+    <menuitem id="menu_neahomes_credito" name="Crédito" parent="menu_neahomes_root"
+              action="action_neahomes_credito" sequence="12"/>
+
+    <menuitem id="menu_neahomes_descuento" name="Códigos de descuento" parent="menu_neahomes_root"
+              action="action_neahomes_descuento" sequence="13"/>
 
     <menuitem id="menu_neahomes_blog" name="Blog" parent="menu_neahomes_root" sequence="88"/>
     <menuitem id="menu_neahomes_blog_articulo" name="Artículos" parent="menu_neahomes_blog"

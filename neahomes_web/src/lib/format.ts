@@ -6,6 +6,15 @@ export function formatPrice(value: number, currency = 'EUR') {
   }
 }
 
+/** Importe con céntimos (cuotas). */
+export function formatMoney(value: number, currency = 'EUR') {
+  try {
+    return new Intl.NumberFormat('es-ES', { style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: 'always' } as Intl.NumberFormatOptions).format(value);
+  } catch {
+    return `${value.toFixed(2)} ${currency}`;
+  }
+}
+
 export function formatExtra(value: number, currency = 'EUR') {
   return value > 0 ? `+${formatPrice(value, currency)}` : 'Incluido';
 }

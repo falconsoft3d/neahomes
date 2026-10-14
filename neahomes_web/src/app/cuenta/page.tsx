@@ -5,6 +5,7 @@ import ModeloPhoto from '@/components/ModeloPhoto';
 import LogoutButton from '@/components/LogoutButton';
 import TicketCard from '@/components/TicketCard';
 import DocumentsSection from '@/components/DocumentsSection';
+import PaymentPlan from '@/components/PaymentPlan';
 import ProfileSection from '@/components/ProfileSection';
 import TicketForm from '@/components/TicketForm';
 import { getToken, odoo } from '@/lib/odoo';
@@ -85,6 +86,14 @@ export default async function CuentaPage({ searchParams }: Props) {
                   <p className="muted">{q.distribuciones.map((d) => `${d.name}: ${d.cantidad}`).join(' · ')}</p>
                 )}
                 <p className="quote-total">{formatPrice(q.amount_total, cur)}</p>
+                {q.descuento && (
+                  <p className="muted">Descuento {q.descuento.code}: −{formatPrice(q.descuento.amount, cur)}</p>
+                )}
+                {q.pago?.tipo === 'financiado' ? (
+                  <PaymentPlan payment={q.pago} rows={q.plan_pagos} currency={cur} />
+                ) : (
+                  <p className="muted">Al contado</p>
+                )}
               </div>
             </article>
           ))}

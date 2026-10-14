@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import HouseIllustration from './HouseIllustration';
 import ConditionsCheckbox from './ConditionsCheckbox';
 import ModeloPhoto from './ModeloPhoto';
-import { formatExtra, formatPrice } from '@/lib/format';
+import { CREDIT_NOTE, defaultCredit, financeSummary, formatPercent } from '@/lib/credit';
+import { formatExtra, formatMoney, formatPrice } from '@/lib/format';
 import { resolveSelection, saveAcceptance, saveDraft } from '@/lib/draft';
-import type { Catalog, Conditions, Selection } from '@/lib/types';
+import type { Catalog, Conditions, Discount, Selection } from '@/lib/types';
 
 type Props = { catalog: Catalog; loggedIn: boolean; initial: Partial<Selection>; conditions: Conditions | null };
 
@@ -27,6 +28,35 @@ export default function Configurator({ catalog, loggedIn, initial, conditions }:
   const [view, setView] = useState<'foto' | 'diseno'>('foto');
   // Distribución: por defecto 0 de cada elemento; se reinicia al cambiar de modelo.
   const [dist, setDist] = useState<Record<number, number>>({});
+  // Forma de pago: al contado o financiado con un plan de crédito de Odoo y un plazo elegido por el cliente.
+  const credits = catalog.creditos ?? [];
+  const [payTipo, setPayTipo] = useState<'contado' | 'financiado'>('contado');
+  const [creditId, setCreditId] = useState(defaultCredit(credits)?.id ?? 0);
+  const [months, setMonths] = useState(defaultCredit(credits)?.plazo ?? 0);
+  const credit = credits.find((c) => c.id === creditId) ?? null;
+  const financed = payTipo === 'financiado' && credit !== null;
+  // Código de descuento: opcional; se comprueba al aplicarlo y Odoo lo vuelve a validar al guardar.
+  const [codeInput, setCodeInput] = useState('');
+  const [discount, setDiscount] = useState<Discount | null>(null);
+  const [codeError, setCodeError] = useState('');
+  const [checkingCode, setCheckingCode] = useState(false);
+
+  async function applyCode(e?: React.FormEvent) {
+    e?.preventDefault();
+    const code = codeInput.trim();
+    if (!code) return;
+    setCodeError('');
+    setCheckingCode(true);
+    const res = await fetch(`/api/discount?code=${encodeURIComponent(code)}`);
+    const data = await res.json().catch(() => ({}));
+    setCheckingCode(false);
+    if (!res.ok) {
+      setDiscount(null);
+      return setCodeError(data.error ?? 'El código no es válido o ha caducado.');
+    }
+    setDiscount(data.discount);
+    setCodeInput('');
+  }
   const [saving, setSaving] = useState(false);
   // Sin aceptar las condiciones de venta no se puede continuar (Odoo también lo comprueba).
   const [accepted, setAccepted] = useState(false);
@@ -50,7 +80,12 @@ export default function Configurator({ catalog, loggedIn, initial, conditions }:
 
   async function encargar() {
     setError('');
-    const selection: Selection = { ...sel, distribuciones: dist };
+    const selection: Selection = {
+      ...sel,
+      distribuciones: dist,
+      pago: financed && credit ? { tipo: 'financiado', credito_id: credit.id, plazo: months } : { tipo: 'contado' },
+      ...(discount && { descuento: discount.code, descuento_importe: discount.amount }),
+    };
     if (conditions && !accepted) {
       setError('Acepta las condiciones de venta para continuar.');
       acceptRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -81,6 +116,9 @@ export default function Configurator({ catalog, loggedIn, initial, conditions }:
     router.refresh();
   }
 
+  // Total con el descuento aplicado: es el que se paga al contado y el que se financia.
+  const total = Math.max(r.total - (discount?.amount ?? 0), 0);
+  const fin = credit ? financeSummary(total, credit.tin, months || credit.plazo) : { cuota: 0, total: 0, intereses: 0 };
   const summary = [r.modelo.m2 ? `${r.modelo.m2} m²` : '', r.cubierta.name, r.acabado.name].filter(Boolean).join(' · ');
   const cta = loggedIn ? 'Guardar cotización' : 'Encargar casa';
 
@@ -205,6 +243,90 @@ export default function Configurator({ catalog, loggedIn, initial, conditions }:
           </p>
         </div>
 
+        {credits.length > 0 && credit && (
+          <div className="cfg-group">
+            <h2>Forma de pago</h2>
+            <div className="segmented">
+              <button
+                type="button"
+                className={`segment${payTipo === 'contado' ? ' is-selected' : ''}`}
+                onClick={() => setPayTipo('contado')}
+                aria-pressed={payTipo === 'contado'}
+              >
+                <strong>Al contado</strong>
+                <small>{formatPrice(total, cur)}</small>
+              </button>
+              <button
+                type="button"
+                className={`segment${payTipo === 'financiado' ? ' is-selected' : ''}`}
+                onClick={() => setPayTipo('financiado')}
+                aria-pressed={payTipo === 'financiado'}
+              >
+                <strong>Financiado</strong>
+                <small>{formatMoney(fin.cuota, cur)}/mes</small>
+              </button>
+            </div>
+
+            {financed && (
+              <div className="finance">
+                {credits.length > 1 &&
+                  credits.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className={`option-card${c.id === credit.id ? ' is-selected' : ''}`}
+                      onClick={() => {
+                        setCreditId(c.id);
+                        setMonths(c.plazo);
+                      }}
+                      aria-pressed={c.id === credit.id}
+                    >
+                      <span>
+                        <strong>{c.name}</strong>
+                        <small>TIN {formatPercent(c.tin)} · TAE {formatPercent(c.tae)}</small>
+                      </span>
+                    </button>
+                  ))}
+                <div className="finance-months">
+                  <label htmlFor="finance-months">Plazo</label>
+                  <div className="finance-months-value">
+                    <input
+                      type="number"
+                      min={credit.plazo_min}
+                      max={credit.plazo_max}
+                      value={months}
+                      onChange={(e) => setMonths(Number(e.target.value) || credit.plazo_min)}
+                      onBlur={() => setMonths((m) => Math.min(credit.plazo_max, Math.max(credit.plazo_min, Math.round(m))))}
+                      aria-label="Plazo en meses"
+                    />
+                    <span>meses{months % 12 === 0 ? ` · ${months / 12} ${months === 12 ? 'año' : 'años'}` : ''}</span>
+                  </div>
+                  <input
+                    id="finance-months"
+                    type="range"
+                    min={credit.plazo_min}
+                    max={credit.plazo_max}
+                    step={1}
+                    value={months}
+                    onChange={(e) => setMonths(Number(e.target.value))}
+                  />
+                  <div className="finance-range">
+                    <span>{credit.plazo_min} meses</span>
+                    <span>{credit.plazo_max} meses</span>
+                  </div>
+                </div>
+                <dl className="finance-figures">
+                  <div className="finance-cuota"><dt>Cuota mensual</dt><dd>{formatMoney(fin.cuota, cur)}</dd></div>
+                  <div><dt>TIN / TAE</dt><dd>{formatPercent(credit.tin)} / {formatPercent(credit.tae)}</dd></div>
+                  <div><dt>Intereses</dt><dd>{formatMoney(fin.intereses, cur)}</dd></div>
+                  <div><dt>Importe total a pagar</dt><dd>{formatMoney(fin.total, cur)}</dd></div>
+                </dl>
+                <p className="fine">{CREDIT_NOTE}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="cfg-group cfg-summary">
           <h2>Resumen</h2>
           <dl>
@@ -216,8 +338,43 @@ export default function Configurator({ catalog, loggedIn, initial, conditions }:
               .map((d) => (
                 <div key={d.id}><dt>{d.name}</dt><dd>× {dist[d.id]}</dd></div>
               ))}
-            <div className="total"><dt>Total</dt><dd>{formatPrice(r.total, cur)}</dd></div>
+            {discount && (
+              <div className="discount-row">
+                <dt>
+                  Descuento <span className="discount-code">{discount.code}</span>
+                  <button type="button" className="link-button discount-remove" onClick={() => setDiscount(null)}>
+                    Quitar
+                  </button>
+                </dt>
+                <dd>−{formatPrice(discount.amount, cur)}</dd>
+              </div>
+            )}
+            <div className="total"><dt>Total</dt><dd>{formatPrice(total, cur)}</dd></div>
+            {financed && (
+              <div><dt>Financiado · {months} meses</dt><dd>{formatMoney(fin.cuota, cur)}/mes</dd></div>
+            )}
           </dl>
+          {!discount && (
+            <form className="discount-form" onSubmit={applyCode}>
+              <label htmlFor="discount-code" className="sr-only">Código de descuento</label>
+              <input
+                id="discount-code"
+                value={codeInput}
+                onChange={(e) => {
+                  setCodeInput(e.target.value);
+                  setCodeError('');
+                }}
+                placeholder="¿Tienes un código de descuento?"
+                autoComplete="off"
+                autoCapitalize="characters"
+                maxLength={64}
+              />
+              <button className="btn btn-light btn-sm" disabled={!codeInput.trim() || checkingCode}>
+                {checkingCode ? 'Comprobando…' : 'Aplicar'}
+              </button>
+            </form>
+          )}
+          {codeError && <p className="form-error">{codeError}</p>}
           <p className="fine">Incluye transporte, montaje y climatización. Impuestos no incluidos.</p>
           {conditions && (
             <ConditionsCheckbox
@@ -239,8 +396,17 @@ export default function Configurator({ catalog, loggedIn, initial, conditions }:
           <span>{summary}</span>
         </div>
         <div className="cfg-bar-price">
-          <strong>{formatPrice(r.total, cur)}</strong>
-          <span>Precio cerrado</span>
+          {financed ? (
+            <>
+              <strong>{formatMoney(fin.cuota, cur)}/mes</strong>
+              <span>{months} meses · total {formatPrice(total, cur)}</span>
+            </>
+          ) : (
+            <>
+              <strong>{formatPrice(total, cur)}</strong>
+              <span>{discount ? `Con descuento ${discount.code}` : 'Precio cerrado'}</span>
+            </>
+          )}
         </div>
         <div className="cfg-bar-action">
           {error && <span className="form-error">{error}</span>}

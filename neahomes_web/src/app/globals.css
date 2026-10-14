@@ -1946,6 +1946,195 @@ dl .total dd {
   gap: 12px;
 }
 
+/* ------------------------------------------------------- descuentos */
+.discount-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.discount-form input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-transform: uppercase;
+}
+
+.discount-form input::placeholder {
+  text-transform: none;
+}
+
+.discount-form input:focus {
+  outline: none;
+  border-color: var(--text);
+}
+
+.discount-form .btn {
+  min-width: 96px;
+  min-height: 36px;
+}
+
+.discount-row dd {
+  color: var(--accent);
+}
+
+.discount-code {
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.04em;
+}
+
+.discount-remove {
+  margin-left: 8px;
+  font-size: 12px;
+  text-decoration: underline;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------ crédito */
+.finance {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.finance-months {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0 16px;
+}
+
+.finance-months label {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.finance-months-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.finance-months-value input {
+  width: 84px;
+  height: 36px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--soft);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
+.finance-months-value input:focus {
+  outline: none;
+  background: #fff;
+  border-color: var(--text);
+}
+
+.finance-months input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.finance-range {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--subtle);
+}
+
+.finance-figures div {
+  padding: 5px 0;
+}
+
+.finance-cuota dd {
+  font-size: 22px;
+  color: var(--accent);
+}
+
+.card-monthly {
+  margin-top: -12px;
+}
+
+.card-monthly strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.credit-note {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.quote-finance {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quote-finance .muted {
+  font-size: 12px;
+}
+
+.plan summary {
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--accent);
+  width: fit-content;
+}
+
+.plan-table-wrap {
+  max-height: 320px;
+  overflow: auto;
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.plan-table {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.plan-table th,
+.plan-table td {
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+
+.plan-currency {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--subtle);
+}
+
+.plan-table th {
+  position: sticky;
+  top: 0;
+}
+
+.plan-table td:not(:first-child),
+.plan-table th:not(:first-child) {
+  text-align: right;
+}
+
 /* ------------------------------------------------------------ documentos */
 .documents {
   margin-top: 16px;
