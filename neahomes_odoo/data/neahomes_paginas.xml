@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Página «Quiénes somos»: se crea una vez con un texto inicial y se edita en NeaHomes > Web > Quiénes somos. -->
+<odoo noupdate="1">
+    <record id="pagina_quienes_somos" model="neahomes.pagina">
+        <field name="name">Quiénes somos</field>
+        <field name="subtitle">Casas prefabricadas llave en mano, con un precio cerrado y sin letra pequeña.</field>
+        <field name="slug">quienes-somos</field>
+        <field name="body" type="html">
+<div>
+    <h3>Nuestra historia</h3>
+    <p>En NeaHomes diseñamos y fabricamos casas prefabricadas pensadas para vivir. Cuenta aquí cómo nació el proyecto y quién está detrás.</p>
+
+    <h3>Qué hacemos</h3>
+    <p>Te acompañamos desde el diseño de tu casa hasta la entrega: eliges el modelo, la cubierta, los acabados y la distribución, y conoces el precio desde el primer momento.</p>
+
+    <h3>Cómo trabajamos</h3>
+    <ul>
+        <li><strong>Precio cerrado:</strong> la cifra que ves es la que firmas.</li>
+        <li><strong>Llave en mano:</strong> nos ocupamos del transporte y el montaje.</li>
+        <li><strong>Acompañamiento:</strong> un asesor sigue tu proyecto de principio a fin.</li>
+    </ul>
+</div>
+        </field>
+    </record>
+</odoo>

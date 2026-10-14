@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import StarTrail from './StarTrail';
 import type { Slide } from '@/lib/types';
 
 const AUTOPLAY_MS = 6000;
@@ -49,6 +50,8 @@ export default function HeroCarousel({ slides }: { slides: Slide[] }) {
           />
         </div>
       ))}
+
+      <StarTrail />
 
       <div className="carousel-copy" key={current.id}>
         <h1>{current.title}</h1>

@@ -1,7 +1,8 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { unstable_rethrow } from 'next/navigation';
-import type { BlogArticle, BlogArticleDetail, BlogCategory, Catalog, Conditions, Slide } from './types';
+import { cache } from 'react';
+import type { BlogArticle, BlogArticleDetail, BlogCategory, Catalog, Conditions, Page, Slide } from './types';
 
 export const TOKEN_COOKIE = 'nea_token';
 /** Solo para la interfaz (enlace al CRM); los permisos reales los comprueba Odoo en cada llamada. */
@@ -70,6 +71,11 @@ export async function getArticle(slug: string, token?: string): Promise<BlogArti
   return res.ok ? res.data.article : null;
 }
 
+export async function getPage(slug: string): Promise<Page | null> {
+  const res = await odoo<{ page: Page }>(`/pages/${encodeURIComponent(slug)}`);
+  return res.ok ? res.data.page : null;
+}
+
 export async function getConditions(): Promise<Conditions | null> {
   const res = await odoo<{ conditions: Conditions | null }>('/conditions');
   return res.ok ? res.data.conditions : null;
@@ -132,8 +138,8 @@ export const tokenCookieOptions = {
 export type Legal = { company: string; nif: string; address: string; email: string };
 export type Settings = { instagram_url: string; legal: Legal };
 
-export async function getSettings(): Promise<Settings> {
+export const getSettings = cache(async (): Promise<Settings> => {
   const res = await odoo<Settings>('/settings');
   const empty: Legal = { company: '', nif: '', address: '', email: '' };
   return res.ok ? { ...res.data, legal: { ...empty, ...res.data.legal } } : { instagram_url: '', legal: empty };
-}
+});

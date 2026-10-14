@@ -1,6 +1,9 @@
+import base64
+import binascii
 import functools
 import json
 import logging
+import os
 import re
 
 from odoo import http
@@ -14,6 +17,11 @@ _logger = logging.getLogger(__name__)
 # Campos del contacto que el cliente puede completar desde /cuenta (además de país y provincia).
 PROFILE_FIELDS = ('name', 'email', 'phone', 'mobile', 'vat', 'street', 'street2', 'zip', 'city')
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+
+# Documentos que el cliente puede subir desde «Mis datos» (sin HTML/SVG ni ejecutables).
+DOC_EXTENSIONS = {'.pdf', '.jpg', '.jpeg', '.png', '.webp', '.heic', '.doc', '.docx', '.xls', '.xlsx', '.odt', '.ods', '.txt'}
+DOC_MAX_BYTES = 4 * 1024 * 1024
+DOC_MARK = 'Subido desde la web NeaHomes'
 
 CATALOGS = {
     'modelos': 'neahomes.modelo',
@@ -444,6 +452,67 @@ class NeahomesApi(http.Controller):
             state_id=partner.state_id.id or None,
         )
 
+    def _documents(self, partner):
+        attachments = request.env['ir.attachment'].sudo().search([
+            ('res_model', '=', 'res.partner'), ('res_id', '=', partner.id), ('description', '=', DOC_MARK),
+        ], order='id desc')
+        return [{
+            'id': a.id, 'name': a.name, 'size': a.file_size,
+            'date': a.create_date and a.create_date.strftime('%Y-%m-%d %H:%M:%S'),
+        } for a in attachments]
+
+    @http.route('/neahomes/api/documents', type='http', auth='public', methods=['POST'], csrf=False)
+    @json_errors
+    def upload_document(self, **kw):
+        if (err := self._guard()):
+            return err
+        partner = self._partner()
+        if not partner:
+            return self._error('Sesión no válida', 401)
+        body = self._body()
+        name = os.path.basename((body.get('name') or '').strip())[:200]
+        ext = os.path.splitext(name)[1].lower()
+        if not name or ext not in DOC_EXTENSIONS:
+            return self._error('Tipo de archivo no permitido. Sube PDF, imágenes, Word, Excel o texto.')
+        try:
+            raw = base64.b64decode(body.get('data') or '', validate=True)
+        except (binascii.Error, ValueError):
+            return self._error('Archivo no válido.')
+        if not raw:
+            return self._error('El archivo está vacío.')
+        if len(raw) > DOC_MAX_BYTES:
+            return self._error('El archivo supera el máximo de 4 MB.')
+        # Aparece en el historial (chatter) del contacto como nota interna con el adjunto.
+        # El adjunto lo crea message_post (attachments=...): desde la web el usuario es el público y
+        # Odoo no vincula adjuntos creados aparte (attachment_ids) por un usuario no interno.
+        message = partner.message_post(
+            body=f'Documento subido desde la web: {name}',
+            attachments=[(name, raw)],
+            author_id=partner.id,
+            message_type='comment',
+            subtype_xmlid='mail.mt_note',
+        )
+        message.attachment_ids.sudo().write({'description': DOC_MARK})
+        return self._json({'documents': self._documents(partner)})
+
+    # ------------------------------------------------------------- páginas
+    @http.route('/neahomes/api/pages/<string:slug>', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
+    def page(self, slug, **kw):
+        if (err := self._guard()):
+            return err
+        page = request.env['neahomes.pagina'].sudo().search([('slug', '=', slug)], limit=1)
+        if not page:
+            return self._error('Página no encontrada', 404)
+        return self._json({'page': page._api_values()})
+
+    @http.route('/neahomes/api/pages/<int:page_id>/image', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
+    def page_image(self, page_id, width=0, **kw):
+        if (err := self._guard()):
+            return err
+        return self._image_response('neahomes.pagina', page_id, width, 2560)
+
     @http.route('/neahomes/api/profile', type='http', auth='public', methods=['GET'], csrf=False)
     @json_errors
     def profile(self, **kw):
@@ -456,6 +525,7 @@ class NeahomesApi(http.Controller):
         return self._json({
             'profile': self._profile_values(partner),
             'countries': [{'id': c.id, 'name': c.name, 'code': c.code} for c in countries],
+            'documents': self._documents(partner),
         })
 
     @http.route('/neahomes/api/states', type='http', auth='public', methods=['GET'], csrf=False)

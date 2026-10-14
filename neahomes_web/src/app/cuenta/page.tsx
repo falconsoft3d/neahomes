@@ -4,11 +4,12 @@ import HouseIllustration from '@/components/HouseIllustration';
 import ModeloPhoto from '@/components/ModeloPhoto';
 import LogoutButton from '@/components/LogoutButton';
 import TicketCard from '@/components/TicketCard';
+import DocumentsSection from '@/components/DocumentsSection';
 import ProfileSection from '@/components/ProfileSection';
 import TicketForm from '@/components/TicketForm';
 import { getToken, odoo } from '@/lib/odoo';
 import { formatDate, formatPrice } from '@/lib/format';
-import type { Country, Partner, Profile, Quote, Ticket } from '@/lib/types';
+import type { Country, Partner, Profile, Quote, Ticket, UserDocument } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export default async function CuentaPage({ searchParams }: Props) {
     odoo<{ partner: Partner; quotes: Quote[]; tickets: Ticket[] }>('/me', { token }),
     odoo<{ currency: string }>('/catalog'),
     searchParams,
-    odoo<{ profile: Profile; countries: Country[] }>('/profile', { token }),
+    odoo<{ profile: Profile; countries: Country[]; documents: UserDocument[] }>('/profile', { token }),
   ]);
   // Token caducado o contraseña cambiada desde Odoo: hay que volver a entrar.
   if (res.status === 401) redirect('/login');
@@ -108,7 +109,10 @@ export default async function CuentaPage({ searchParams }: Props) {
         <h2 className="account-title">Mis datos</h2>
       </div>
       {profileRes.ok ? (
-        <ProfileSection profile={profileRes.data.profile} countries={profileRes.data.countries} />
+        <>
+          <ProfileSection profile={profileRes.data.profile} countries={profileRes.data.countries} />
+          <DocumentsSection documents={profileRes.data.documents ?? []} />
+        </>
       ) : (
         <p className="muted">No pudimos cargar tus datos. Inténtalo más tarde.</p>
       )}

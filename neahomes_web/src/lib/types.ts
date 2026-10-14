@@ -66,6 +66,9 @@ export type Profile = {
   state_id: number | null;
 };
 
+export type Page = { id: number; title: string; subtitle: string; body: string; image_version: number };
+export type UserDocument = { id: number; name: string; size: number; date: string };
+
 export type Partner = { id: number; name: string; email: string; phone: string; user: string; comercial: boolean };
 
 export type Quote = {

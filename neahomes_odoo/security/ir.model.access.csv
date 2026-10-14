@@ -16,3 +16,4 @@ access_neahomes_condicion_aceptacion_system,neahomes.condicion.aceptacion.system
 access_neahomes_blog_categoria_user,neahomes.blog.categoria.user,model_neahomes_blog_categoria,group_neahomes_user,1,1,1,1
 access_neahomes_blog_articulo_user,neahomes.blog.articulo.user,model_neahomes_blog_articulo,group_neahomes_user,1,1,1,1
 access_neahomes_blog_comentario_user,neahomes.blog.comentario.user,model_neahomes_blog_comentario,group_neahomes_user,1,1,1,1
+access_neahomes_pagina_user,neahomes.pagina.user,model_neahomes_pagina,group_neahomes_user,1,1,0,0

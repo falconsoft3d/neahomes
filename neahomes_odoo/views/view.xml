@@ -676,6 +676,34 @@
         </field>
     </record>
 
+    <!-- Página «Quiénes somos» -->
+    <record id="view_neahomes_pagina_form" model="ir.ui.view">
+        <field name="name">neahomes.pagina.form</field>
+        <field name="model">neahomes.pagina</field>
+        <field name="arch" type="xml">
+            <form create="false" delete="false">
+                <sheet>
+                    <field name="image" widget="image" class="oe_avatar" options="{'size': [240, 135]}"/>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Título"/></h1>
+                        <field name="subtitle" placeholder="Subtítulo"/>
+                    </div>
+                    <group>
+                        <field name="slug"/>
+                    </group>
+                    <field name="body"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_neahomes_quienes_somos" model="ir.actions.act_window">
+        <field name="name">Quiénes somos</field>
+        <field name="res_model">neahomes.pagina</field>
+        <field name="view_mode">form</field>
+        <field name="res_id" ref="pagina_quienes_somos"/>
+    </record>
+
     <!-- Formulario de contacto -->
     <record id="view_neahomes_contacto_tree" model="ir.ui.view">
         <field name="name">neahomes.contacto.tree</field>
@@ -822,6 +850,8 @@
     <menuitem id="menu_neahomes_web" name="Web" parent="menu_neahomes_root" sequence="90"/>
     <menuitem id="menu_neahomes_slide" name="Carrusel" parent="menu_neahomes_web"
               action="action_neahomes_slide" sequence="10"/>
+    <menuitem id="menu_neahomes_quienes_somos" name="Quiénes somos" parent="menu_neahomes_web"
+              action="action_neahomes_quienes_somos" sequence="15"/>
     <menuitem id="menu_neahomes_contacto" name="Formulario de contacto" parent="menu_neahomes_web"
               action="action_neahomes_contacto" sequence="20"/>
     <menuitem id="menu_neahomes_condiciones" name="Condiciones de venta" parent="menu_neahomes_web" sequence="30"/>
