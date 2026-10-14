@@ -25,8 +25,11 @@ export async function odoo<T = Record<string, unknown>>(
     });
     const data = await res.json().catch(() => ({ error: 'Respuesta no válida de Odoo' }));
     // 401 de sesión es normal (token caducado); 401 de API key o cualquier otro fallo se deja en los logs.
-    if (!res.ok && !(res.status === 401 && token && data.error !== 'API key inválida')) {
-      console.error(`[odoo] ${method} ${path} → ${res.status}: ${data.error ?? ''} (ODOO_URL=${base})`);
+    const keyError = typeof data.error === 'string' && data.error.includes('API key');
+    if (!res.ok && !(res.status === 401 && token && !keyError)) {
+      // Nunca se registra la clave: solo si está configurada y su longitud, para compararla con la de Odoo.
+      const keyInfo = apiKey ? `ODOO_API_KEY de ${apiKey.length} caracteres` : 'ODOO_API_KEY no configurada';
+      console.error(`[odoo] ${method} ${path} → ${res.status}: ${data.error ?? ''} (ODOO_URL=${base}, ${keyInfo})`);
     }
     return { ok: res.ok, status: res.status, data };
   } catch (err) {

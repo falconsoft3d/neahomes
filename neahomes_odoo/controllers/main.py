@@ -29,9 +29,13 @@ class NeahomesApi(http.Controller):
         except ValueError:
             return {}
 
-    def _check_api_key(self):
+    def _api_key_error(self):
+        """None si la API key es correcta (o no hay ninguna configurada); si no, el motivo."""
         expected = (request.env['neahomes.parametro'].sudo().get_param('api_key') or '').strip()
-        return not expected or (request.httprequest.headers.get('X-Neahomes-Key') or '').strip() == expected
+        received = (request.httprequest.headers.get('X-Neahomes-Key') or '').strip()
+        if not expected or received == expected:
+            return None
+        return 'Falta la API key' if not received else 'API key inválida'
 
     def _partner(self):
         auth = request.httprequest.headers.get('Authorization', '')
@@ -39,7 +43,8 @@ class NeahomesApi(http.Controller):
         return request.env['res.partner'].sudo()._nea_from_token(token)
 
     def _guard(self):
-        return None if self._check_api_key() else self._error('API key inválida', 401)
+        reason = self._api_key_error()
+        return self._error(reason, 401) if reason else None
 
     # -------------------------------------------------------------- endpoints
     @http.route('/neahomes/api/catalog', type='http', auth='public', methods=['GET'], csrf=False)
