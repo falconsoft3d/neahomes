@@ -59,11 +59,15 @@ export function captchaHouseSvg(forma: Forma, m2: number, color: string) {
     + `<rect x="${x}" y="${winY}" width="${win}" height="${win}" fill="url(#${id}g)"/>`
     + `<rect x="${x + win / 2 - 1.5}" y="${winY}" width="3" height="${win}" fill="${FRAME}"/>`).join('');
 
-  return `<svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">`
+  // Encuadre ajustado a la casa (con algo de margen variable) para que se vea grande en la casilla.
+  const pad = 40 + randomInt(20);
+  const top = 180 - randomInt(15);
+  const viewBox = `${x0 - pad} ${top} ${w + pad * 2} ${ground + 16 - top}`;
+  return `<svg viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">`
     + `<defs><pattern id="${id}b" width="14" height="10" patternUnits="userSpaceOnUse"><rect width="1.4" height="10" fill="#000" opacity="0.16"/></pattern>`
     + `<linearGradient id="${id}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9e2e6"/><stop offset="0.55" stop-color="#9fb2bb"/><stop offset="1" stop-color="#6f838d"/></linearGradient>`
     + `<clipPath id="${id}w"><polygon points="${wall}"/></clipPath></defs>`
-    + `<line x1="40" x2="960" y1="${ground + 1}" y2="${ground + 1}" stroke="#e4e5e6" stroke-width="2"/>`
+    + `<line x1="${x0 - pad}" x2="${x1 + pad}" y1="${ground + 1}" y2="${ground + 1}" stroke="#d9dadb" stroke-width="3"/>`
     + `<polygon points="${wall}" fill="${color}"/>`
     + `<rect x="${x0}" y="150" width="${w}" height="300" fill="url(#${id}b)" clip-path="url(#${id}w)"/>`
     + roof

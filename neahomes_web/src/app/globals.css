@@ -1991,7 +1991,7 @@ dl .total dd {
 .captcha-option svg {
   display: block;
   width: 100%;
-  height: auto;
+  height: 72px;
 }
 
 .captcha-option:hover {
