@@ -24,12 +24,15 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
   });
   // Con foto del modelo se alterna entre la foto real y el dibujo que refleja cubierta y acabado.
   const [view, setView] = useState<'foto' | 'diseno'>('foto');
+  // Distribución: por defecto 0 de cada elemento; se reinicia al cambiar de modelo.
+  const [dist, setDist] = useState<Record<number, number>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const r = useMemo(() => resolveSelection(catalog, sel), [catalog, sel]);
   const set = (key: keyof Selection) => (id: number) => {
     setSel((s) => ({ ...s, [key]: id }));
     setView(key === 'modelo_id' ? 'foto' : 'diseno');
+    if (key === 'modelo_id') setDist({});
   };
 
   if (!r) {
@@ -43,8 +46,9 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
 
   async function encargar() {
     setError('');
+    const selection: Selection = { ...sel, distribuciones: dist };
     if (!loggedIn) {
-      saveDraft(sel);
+      saveDraft(selection);
       router.push('/registro');
       return;
     }
@@ -52,11 +56,11 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
     const res = await fetch('/api/quotes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ selection: sel }),
+      body: JSON.stringify({ selection }),
     });
     const data = await res.json().catch(() => ({}));
     if (res.status === 401) {
-      saveDraft(sel);
+      saveDraft(selection);
       router.push('/login');
       return;
     }
@@ -139,6 +143,36 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
           </div>
         </div>
 
+        {r.modelo.distribuciones.length > 0 && (
+          <div className="cfg-group">
+            <h2>Distribución</h2>
+            <ul className="dist-list">
+              {r.modelo.distribuciones.map((d) => {
+                const qty = dist[d.id] ?? 0;
+                const change = (delta: number) =>
+                  setDist((cur) => ({ ...cur, [d.id]: Math.min(d.max, Math.max(0, qty + delta)) }));
+                return (
+                  <li key={d.id} className="dist-row">
+                    <span>
+                      <strong>{d.name}</strong>
+                      <small>Máximo {d.max}</small>
+                    </span>
+                    <div className="stepper">
+                      <button type="button" onClick={() => change(-1)} disabled={qty <= 0} aria-label={`Quitar ${d.name}`}>
+                        −
+                      </button>
+                      <output aria-live="polite" aria-label={`${d.name}: ${qty}`}>{qty}</output>
+                      <button type="button" onClick={() => change(1)} disabled={qty >= d.max} aria-label={`Añadir ${d.name}`}>
+                        +
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
         <div className="cfg-group">
           <h2>Acabado exterior</h2>
           <div className="swatches">
@@ -166,6 +200,11 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
             <div><dt>{r.modelo.name}{r.modelo.m2 ? ` · ${r.modelo.m2} m²` : ''}</dt><dd>{formatPrice(r.modelo.price, cur)}</dd></div>
             <div><dt>Cubierta {r.cubierta.name.toLowerCase()}</dt><dd>{formatExtra(r.cubierta.price, cur)}</dd></div>
             <div><dt>Acabado {r.acabado.name.toLowerCase()}</dt><dd>{formatExtra(r.acabado.price, cur)}</dd></div>
+            {r.modelo.distribuciones
+              .filter((d) => (dist[d.id] ?? 0) > 0)
+              .map((d) => (
+                <div key={d.id}><dt>{d.name}</dt><dd>× {dist[d.id]}</dd></div>
+              ))}
             <div className="total"><dt>Total</dt><dd>{formatPrice(r.total, cur)}</dd></div>
           </dl>
           <p className="fine">Incluye transporte, montaje y climatización. Impuestos no incluidos.</p>

@@ -5,3 +5,4 @@ from . import res_partner
 from . import contacto
 from . import ticket
 from . import slide
+from . import distribucion

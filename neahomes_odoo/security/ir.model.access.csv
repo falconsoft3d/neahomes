@@ -8,3 +8,5 @@ access_neahomes_parametro_system,neahomes.parametro.system,model_neahomes_parame
 access_neahomes_contacto_user,neahomes.contacto.user,model_neahomes_contacto,base.group_user,1,1,1,1
 access_neahomes_ticket_user,neahomes.ticket.user,model_neahomes_ticket,base.group_user,1,1,1,1
 access_neahomes_slide_user,neahomes.slide.user,model_neahomes_slide,base.group_user,1,1,1,1
+access_neahomes_distribucion_user,neahomes.distribucion.user,model_neahomes_distribucion,base.group_user,1,1,1,1
+access_neahomes_cotizacion_distribucion_user,neahomes.cotizacion.distribucion.user,model_neahomes_cotizacion_distribucion,base.group_user,1,1,1,1

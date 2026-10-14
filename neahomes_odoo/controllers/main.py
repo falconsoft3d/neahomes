@@ -4,6 +4,8 @@ import logging
 from odoo import http
 from odoo.http import request
 
+from ..models.cotizacion import QUOTE_STATES
+
 _logger = logging.getLogger(__name__)
 
 CATALOGS = {
@@ -173,7 +175,7 @@ class NeahomesApi(http.Controller):
         return self._json({
             'partner': partner._nea_api_values(),
             'quotes': [q._api_values() for q in partner.nea_cotizacion_ids],
-            'tickets': [t._api_values() for t in partner.nea_ticket_ids],
+            'tickets': [t._api_values(viewer=partner) for t in partner.nea_ticket_ids],
         })
 
     @http.route('/neahomes/api/tickets', type='http', auth='public', methods=['POST'], csrf=False)
@@ -194,13 +196,73 @@ class NeahomesApi(http.Controller):
             quote = partner.nea_cotizacion_ids.filtered(lambda q: str(q.id) == str(body['quote_id']))
             if not quote:
                 return self._error('Cotización no válida.')
-        ticket = request.env['neahomes.ticket'].sudo().create({
+        ticket = request.env['neahomes.ticket'].sudo().with_context(mail_create_nosubscribe=True).create({
             'name': title,
             'description': description,
             'partner_id': partner.id,
             'cotizacion_id': quote.id or False,
         })
-        return self._json({'ticket': ticket._api_values()})
+        return self._json({'ticket': ticket._api_values(viewer=partner)})
+
+    @http.route('/neahomes/api/tickets/<int:ticket_id>/reply', type='http', auth='public', methods=['POST'], csrf=False)
+    def reply_ticket(self, ticket_id, **kw):
+        if (err := self._guard()):
+            return err
+        partner = self._partner()
+        if not partner:
+            return self._error('Sesión no válida', 401)
+        ticket = request.env['neahomes.ticket'].sudo().browse(ticket_id).exists()
+        if not ticket or not ticket._nea_can_access(partner):
+            return self._error('Ticket no encontrado', 404)
+        text = (self._body().get('body') or '').strip()
+        if not text:
+            return self._error('Escribe una respuesta.')
+        ticket._nea_reply(partner, text)
+        return self._json({'ticket': ticket._api_values(viewer=partner)})
+
+    # ------------------------------------------------------------ CRM web
+    def _comercial(self):
+        partner = self._partner()
+        if not partner:
+            return None, self._error('Sesión no válida', 401)
+        if not partner.nea_comercial:
+            return None, self._error('Solo para comerciales', 403)
+        return partner, None
+
+    @http.route('/neahomes/api/crm', type='http', auth='public', methods=['GET'], csrf=False)
+    def crm(self, **kw):
+        if (err := self._guard()):
+            return err
+        partner, err = self._comercial()
+        if err:
+            return err
+        quotes = request.env['neahomes.cotizacion'].sudo().search([('comercial_id', '=', partner.id)])
+        tickets = request.env['neahomes.ticket'].sudo().search([('partner_id', 'in', quotes.partner_id.ids)])
+        return self._json({
+            'states': [{'key': key, 'label': label} for key, label in QUOTE_STATES],
+            'quotes': [q._crm_values() for q in quotes],
+            'tickets': [t._api_values(viewer=partner) for t in tickets],
+        })
+
+    @http.route('/neahomes/api/crm/quote/<int:quote_id>/state', type='http', auth='public', methods=['POST'], csrf=False)
+    def crm_move_quote(self, quote_id, **kw):
+        if (err := self._guard()):
+            return err
+        partner, err = self._comercial()
+        if err:
+            return err
+        quote = request.env['neahomes.cotizacion'].sudo().browse(quote_id).exists()
+        if not quote or quote.comercial_id != partner:
+            return self._error('Cotización no encontrada', 404)
+        state = self._body().get('state')
+        labels = dict(QUOTE_STATES)
+        if state not in labels:
+            return self._error('Estado no válido.')
+        if quote.state != state:
+            quote.write({'state': state})
+            quote.message_post(body=f'{partner.name} movió la cotización a «{labels[state]}» desde el CRM web.',
+                               author_id=partner.id, subtype_xmlid='mail.mt_note')
+        return self._json({'quote': quote._crm_values()})
 
     @http.route('/neahomes/api/quotes', type='http', auth='public', methods=['POST'], csrf=False)
     def create_quote(self, **kw):

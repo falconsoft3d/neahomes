@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import HouseIllustration from '@/components/HouseIllustration';
 import ModeloPhoto from '@/components/ModeloPhoto';
 import LogoutButton from '@/components/LogoutButton';
+import TicketCard from '@/components/TicketCard';
 import TicketForm from '@/components/TicketForm';
 import { getToken, odoo } from '@/lib/odoo';
 import { formatDate, formatPrice } from '@/lib/format';
@@ -41,6 +42,7 @@ export default async function CuentaPage({ searchParams }: Props) {
           <p className="muted">{partner.email}</p>
         </div>
         <div className="account-actions">
+          {partner.comercial && <Link href="/crm" className="btn btn-dark">Ir al CRM</Link>}
           <Link href="/encargar" className="btn btn-primary">Diseñar otra casa</Link>
           <LogoutButton />
         </div>
@@ -74,6 +76,10 @@ export default async function CuentaPage({ searchParams }: Props) {
                 </div>
                 <p className="muted">{q.name} · {formatDate(q.date)}</p>
                 <p>{[q.modelo_m2 ? `${q.modelo_m2} m²` : '', q.cubierta, q.acabado].filter(Boolean).join(' · ')}</p>
+                {q.comercial && <p className="muted">Tu comercial: {q.comercial}</p>}
+                {q.distribuciones.length > 0 && (
+                  <p className="muted">{q.distribuciones.map((d) => `${d.name}: ${d.cantidad}`).join(' · ')}</p>
+                )}
                 <p className="quote-total">{formatPrice(q.amount_total, cur)}</p>
               </div>
             </article>
@@ -90,17 +96,7 @@ export default async function CuentaPage({ searchParams }: Props) {
       ) : (
         <ul className="tickets">
           {tickets.map((t) => (
-            <li key={t.id} className="ticket">
-              <div className="ticket-top">
-                <h3>{t.title}</h3>
-                <span className={`badge badge-${t.state}`}>{t.state_label}</span>
-              </div>
-              <p className="muted">
-                {t.ref} · {formatDate(t.date)}
-                {t.quote && <> · Cotización {t.quote}</>}
-              </p>
-              <p className="ticket-text">{t.description}</p>
-            </li>
+            <TicketCard key={t.id} ticket={t} />
           ))}
         </ul>
       )}

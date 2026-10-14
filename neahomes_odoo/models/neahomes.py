@@ -53,6 +53,7 @@ class NeahomesModelo(models.Model):
     m2 = fields.Integer(string='Metros cuadrados')
     description = fields.Char(string='Descripción corta')
     image = fields.Image(string='Imagen', max_width=1920, max_height=1920)
+    distribucion_ids = fields.One2many('neahomes.distribucion', 'modelo_id', string='Distribución')
 
     def _image_version(self):
         """0 si no hay imagen; si la hay, un número que cambia al editar (sirve para invalidar caché)."""
@@ -61,4 +62,5 @@ class NeahomesModelo(models.Model):
 
     def _api_values(self):
         return dict(super()._api_values(), m2=self.m2, description=self.description or '',
-                    image_version=self._image_version())
+                    image_version=self._image_version(),
+                    distribuciones=[d._api_values() for d in self.distribucion_ids])

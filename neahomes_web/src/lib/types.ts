@@ -1,5 +1,6 @@
 export type CatalogItem = { id: number; name: string; price: number };
-export type Modelo = CatalogItem & { m2: number; description: string; image_version: number };
+export type Distribucion = { id: number; name: string; max: number };
+export type Modelo = CatalogItem & { m2: number; description: string; image_version: number; distribuciones: Distribucion[] };
 export type Forma = 'dos_aguas' | 'un_agua' | 'plana';
 export type Cubierta = CatalogItem & { forma: Forma };
 export type Acabado = CatalogItem & { color: string };
@@ -15,6 +16,8 @@ export type Selection = {
   modelo_id: number;
   cubierta_id: number;
   acabado_id: number;
+  /** Cantidad elegida por distribución (id → 0..max). */
+  distribuciones?: Record<number, number>;
 };
 
 export type Slide = {
@@ -29,7 +32,7 @@ export type Slide = {
   button2_url: string;
 };
 
-export type Partner = { id: number; name: string; email: string; phone: string; user: string };
+export type Partner = { id: number; name: string; email: string; phone: string; user: string; comercial: boolean };
 
 export type Quote = {
   id: number;
@@ -40,13 +43,22 @@ export type Quote = {
   modelo_image_version: number;
   cubierta: string;
   acabado: string;
+  distribuciones: { name: string; cantidad: number }[];
   acabado_color: string;
   cubierta_forma: Forma;
   modelo_m2: number;
   amount_total: number;
-  state: 'nuevo' | 'estudio' | 'aceptada' | 'rechazada';
+  state: QuoteState;
   state_label: string;
+  comercial: string;
 };
+
+export type QuoteState = 'nuevo' | 'estudio' | 'aceptada' | 'rechazada';
+
+/** Cotización vista desde el CRM del comercial: incluye los datos del cliente. */
+export type CrmQuote = Quote & { client: { name: string; email: string; phone: string } };
+
+export type TicketMessage = { id: number; author: string; body: string; date: string; mine: boolean };
 
 export type Ticket = {
   id: number;
@@ -57,4 +69,6 @@ export type Ticket = {
   state_label: string;
   date: string;
   quote: string;
+  client: string;
+  messages: TicketMessage[];
 };

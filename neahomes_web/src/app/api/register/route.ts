@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { odoo, TOKEN_COOKIE, tokenCookieOptions } from '@/lib/odoo';
+import { odoo, ROLE_COOKIE, TOKEN_COOKIE, tokenCookieOptions } from '@/lib/odoo';
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
@@ -8,5 +8,6 @@ export async function POST(req: Request) {
   const { token, ...rest } = res.data;
   const response = NextResponse.json(rest);
   response.cookies.set(TOKEN_COOKIE, token, tokenCookieOptions);
+  response.cookies.delete(ROLE_COOKIE);
   return response;
 }

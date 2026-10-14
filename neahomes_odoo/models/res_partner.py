@@ -12,6 +12,8 @@ class ResPartner(models.Model):
     _inherit = 'res.partner'
 
     nea_portal = fields.Boolean(string='Portal NeaHome activo', copy=False)
+    nea_comercial = fields.Boolean(string='Comercial', copy=False,
+                                   help='Recibe cotizaciones por rotación y accede al CRM de la web (/crm).')
     nea_user = fields.Char(string='Usuario NeaHome', copy=False)
     nea_password = fields.Char(string='Contraseña NeaHome', copy=False,
                                help='Se guarda cifrada. Escribe una nueva para cambiarla.')
@@ -75,4 +77,11 @@ class ResPartner(models.Model):
             'email': self.email or '',
             'phone': self.phone or '',
             'user': self.nea_user,
+            'comercial': self.nea_comercial,
         }
+
+    def _nea_crm_clients(self):
+        """Clientes del comercial: los que tienen alguna cotización asignada a él."""
+        self.ensure_one()
+        quotes = self.env['neahomes.cotizacion'].sudo().search([('comercial_id', '=', self.id)])
+        return quotes.partner_id

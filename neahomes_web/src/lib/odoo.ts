@@ -1,8 +1,11 @@
 import 'server-only';
 import { cookies } from 'next/headers';
+import { unstable_rethrow } from 'next/navigation';
 import type { Catalog, Slide } from './types';
 
 export const TOKEN_COOKIE = 'nea_token';
+/** Solo para la interfaz (enlace al CRM); los permisos reales los comprueba Odoo en cada llamada. */
+export const ROLE_COOKIE = 'nea_role';
 
 type OdooResult<T> = { ok: boolean; status: number; data: T & { error?: string } };
 
@@ -33,6 +36,8 @@ export async function odoo<T = Record<string, unknown>>(
     }
     return { ok: res.ok, status: res.status, data };
   } catch (err) {
+    // Next.js usa excepciones internas para marcar la página como dinámica: hay que dejarlas pasar.
+    unstable_rethrow(err);
     console.error(`[odoo] ${method} ${path} → sin conexión con ${base}:`, err);
     return { ok: false, status: 503, data: { error: 'No se pudo conectar con Odoo' } as T & { error: string } };
   }
@@ -46,7 +51,8 @@ export async function odooRaw(path: string): Promise<Response | null> {
   if (apiKey) headers['X-Neahomes-Key'] = apiKey;
   try {
     return await fetch(`${base}/neahomes/api${path}`, { headers, cache: 'no-store' });
-  } catch {
+  } catch (err) {
+    unstable_rethrow(err);
     return null;
   }
 }
@@ -73,6 +79,10 @@ export async function getSlides(): Promise<Slide[]> {
 export async function getCatalog(): Promise<Catalog | null> {
   const res = await odoo<Catalog>('/catalog');
   return res.ok ? res.data : null;
+}
+
+export async function getIsComercial(): Promise<boolean> {
+  return (await cookies()).get(ROLE_COOKIE)?.value === 'comercial';
 }
 
 export async function getToken(): Promise<string | undefined> {

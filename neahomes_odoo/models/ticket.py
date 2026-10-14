@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+from odoo.tools import html2plaintext, plaintext2html
 
 TICKET_STATES = [
     ('nuevo', 'Nuevo'),
@@ -42,9 +43,36 @@ class NeahomesTicket(models.Model):
     def action_nuevo(self):
         self.write({'state': 'nuevo'})
 
-    def _api_values(self):
+    def _public_messages(self):
+        """Conversación visible para cliente y comercial: mensajes, sin notas internas ni cambios de estado."""
+        self.ensure_one()
+        return self.sudo().message_ids.filtered(
+            lambda m: m.message_type == 'comment' and not m.subtype_id.internal
+        ).sorted('id')
+
+    def _nea_reply(self, author, text):
+        self.ensure_one()
+        return self.sudo().message_post(
+            body=plaintext2html(text), author_id=author.id,
+            message_type='comment', subtype_xmlid='mail.mt_comment',
+        )
+
+    def _nea_can_access(self, partner):
+        """El cliente del ticket o el comercial de ese cliente."""
+        self.ensure_one()
+        return self.partner_id == partner or (partner.nea_comercial and self.partner_id in partner._nea_crm_clients())
+
+    def _api_values(self, viewer=None):
         self.ensure_one()
         return {
+            'messages': [{
+                'id': m.id,
+                'author': m.author_id.name or '',
+                'body': html2plaintext(m.body or '').strip(),
+                'date': fields.Datetime.to_string(m.date),
+                'mine': bool(viewer and m.author_id == viewer),
+            } for m in self._public_messages()],
+            'client': self.partner_id.name,
             'id': self.id,
             'ref': self.ref,
             'title': self.name,

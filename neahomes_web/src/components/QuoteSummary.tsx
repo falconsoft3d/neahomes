@@ -31,6 +31,11 @@ export default function QuoteSummary({ catalog, draft }: { catalog: Catalog; dra
         <div><dt>{r.modelo.name}{r.modelo.m2 ? ` · ${r.modelo.m2} m²` : ''}</dt><dd>{formatPrice(r.modelo.price, cur)}</dd></div>
         <div><dt>Cubierta {r.cubierta.name.toLowerCase()}</dt><dd>{formatExtra(r.cubierta.price, cur)}</dd></div>
         <div><dt>Acabado {r.acabado.name.toLowerCase()}</dt><dd>{formatExtra(r.acabado.price, cur)}</dd></div>
+        {r.modelo.distribuciones
+          .filter((d) => (draft?.distribuciones?.[d.id] ?? 0) > 0)
+          .map((d) => (
+            <div key={d.id}><dt>{d.name}</dt><dd>× {draft?.distribuciones?.[d.id]}</dd></div>
+          ))}
         <div className="total"><dt>Total</dt><dd>{formatPrice(r.total, cur)}</dd></div>
       </dl>
       <Link href="/encargar" className="link">Modificar diseño</Link>

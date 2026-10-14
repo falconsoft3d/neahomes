@@ -1,9 +1,10 @@
 import Link from 'next/link';
-import { getToken } from '@/lib/odoo';
+import { getIsComercial, getToken } from '@/lib/odoo';
 import Logo from './Logo';
 
 export default async function Header() {
-  const loggedIn = Boolean(await getToken());
+  const [token, comercial] = await Promise.all([getToken(), getIsComercial()]);
+  const loggedIn = Boolean(token);
   return (
     <header className="header">
       <Logo />
@@ -12,6 +13,7 @@ export default async function Header() {
         <Link href="/#modelos">Modelos</Link>
         <Link href="/#precio">Precio cerrado</Link>
         <Link href="/contacto">Contacto</Link>
+        {loggedIn && comercial && <Link href="/crm">CRM</Link>}
       </nav>
       <div className="header-actions">
         <Link href={loggedIn ? '/cuenta' : '/login'} className="header-account">
