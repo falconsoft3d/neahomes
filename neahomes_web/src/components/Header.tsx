@@ -9,7 +9,7 @@ export default async function Header() {
       <Logo />
       <nav className="header-nav">
         <Link href="/encargar">Encargar casa</Link>
-        <Link href="/#tamanos">Tamaños</Link>
+        <Link href="/#modelos">Modelos</Link>
         <Link href="/#precio">Precio cerrado</Link>
         <Link href="/contacto">Contacto</Link>
       </nav>

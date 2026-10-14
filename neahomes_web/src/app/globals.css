@@ -821,6 +821,61 @@ dl .total dd {
   background: #fff;
 }
 
+/* --------------------------------------------------------- foto del modelo */
+.modelo-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  background: var(--soft);
+}
+
+/* Foto y dibujo ocupan la misma caja para que las tarjetas tengan la misma altura. */
+.card > svg,
+.card > .modelo-photo,
+.quote > svg,
+.quote > .modelo-photo {
+  aspect-ratio: 16 / 9;
+  border-radius: 0;
+}
+
+.summary-card .modelo-photo {
+  border-radius: 8px;
+}
+
+.cfg-photo {
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-lg);
+  animation: house-fade 0.45s var(--ease);
+}
+
+.view-toggle {
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 16px;
+  padding: 4px;
+  background: var(--soft);
+  border-radius: 999px;
+}
+
+.view-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color 0.25s var(--ease), color 0.25s var(--ease);
+}
+
+.view-toggle button.is-selected {
+  background: #fff;
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
 /* ---------------------------------------------------------------- cuenta */
 .account {
   max-width: 1100px;

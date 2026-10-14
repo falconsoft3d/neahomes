@@ -1,43 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!-- Tamaño -->
-    <record id="view_neahomes_tamano_tree" model="ir.ui.view">
-        <field name="name">neahomes.tamano.tree</field>
-        <field name="model">neahomes.tamano</field>
-        <field name="arch" type="xml">
-            <tree editable="bottom">
-                <field name="sequence" widget="handle"/>
-                <field name="name"/>
-                <field name="m2"/>
-                <field name="price"/>
-            </tree>
-        </field>
-    </record>
-
-    <record id="view_neahomes_tamano_form" model="ir.ui.view">
-        <field name="name">neahomes.tamano.form</field>
-        <field name="model">neahomes.tamano</field>
-        <field name="arch" type="xml">
-            <form>
-                <sheet>
-                    <group>
-                        <field name="name"/>
-                        <field name="m2"/>
-                        <field name="price"/>
-                        <field name="active" invisible="1"/>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-    <record id="action_neahomes_tamano" model="ir.actions.act_window">
-        <field name="name">Tamaño</field>
-        <field name="res_model">neahomes.tamano</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
     <!-- Cubierta -->
     <record id="view_neahomes_cubierta_tree" model="ir.ui.view">
         <field name="name">neahomes.cubierta.tree</field>
@@ -117,9 +80,10 @@
         <field name="name">neahomes.modelo.tree</field>
         <field name="model">neahomes.modelo</field>
         <field name="arch" type="xml">
-            <tree editable="bottom">
+            <tree>
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
+                <field name="m2"/>
                 <field name="description"/>
                 <field name="price"/>
             </tree>
@@ -134,7 +98,9 @@
                 <sheet>
                     <group>
                         <field name="name"/>
+                        <field name="m2"/>
                         <field name="description"/>
+                        <field name="image" widget="image" options="{'size': [360, 180]}"/>
                         <field name="price"/>
                         <field name="active" invisible="1"/>
                     </group>
@@ -159,7 +125,6 @@
                 <field name="create_date" string="Fecha"/>
                 <field name="partner_id"/>
                 <field name="modelo_id"/>
-                <field name="tamano_id"/>
                 <field name="cubierta_id"/>
                 <field name="acabado_id"/>
                 <field name="amount_total" sum="Total"/>
@@ -196,13 +161,11 @@
                     <group string="Configuración">
                         <group>
                             <field name="modelo_id"/>
-                            <field name="tamano_id"/>
                             <field name="cubierta_id"/>
                             <field name="acabado_id"/>
                         </group>
                         <group>
                             <field name="price_modelo"/>
-                            <field name="price_tamano"/>
                             <field name="price_cubierta"/>
                             <field name="price_acabado"/>
                             <field name="amount_total" class="fw-bold"/>
@@ -301,7 +264,6 @@
                             <field name="name"/>
                             <field name="create_date" string="Fecha"/>
                             <field name="modelo_id"/>
-                            <field name="tamano_id"/>
                             <field name="cubierta_id"/>
                             <field name="acabado_id"/>
                             <field name="amount_total"/>
@@ -321,14 +283,12 @@
 
     <menuitem id="menu_neahomes_cotizacion" name="Cotizaciones" parent="menu_neahomes_root"
               action="action_neahomes_cotizacion" sequence="5"/>
-    <menuitem id="menu_neahomes_tamano" name="Tamaño" parent="menu_neahomes_root"
-              action="action_neahomes_tamano" sequence="10"/>
     <menuitem id="menu_neahomes_cubierta" name="Cubierta" parent="menu_neahomes_root"
               action="action_neahomes_cubierta" sequence="20"/>
     <menuitem id="menu_neahomes_acabado" name="Acabados" parent="menu_neahomes_root"
               action="action_neahomes_acabado" sequence="30"/>
     <menuitem id="menu_neahomes_modelo" name="Modelos" parent="menu_neahomes_root"
-              action="action_neahomes_modelo" sequence="40"/>
+              action="action_neahomes_modelo" sequence="10"/>
     <menuitem id="menu_neahomes_contacto" name="Formulario de contacto" parent="menu_neahomes_root"
               action="action_neahomes_contacto" sequence="50"/>
 

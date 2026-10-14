@@ -22,7 +22,6 @@ export default async function EncargarPage({ searchParams }: Props) {
       loggedIn={Boolean(token)}
       initial={{
         modelo_id: num(params.modelo),
-        tamano_id: num(params.tamano),
         cubierta_id: num(params.cubierta),
         acabado_id: num(params.acabado),
       }}

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import HouseIllustration from '@/components/HouseIllustration';
+import ModeloPhoto from '@/components/ModeloPhoto';
 import { getCatalog } from '@/lib/odoo';
 import { formatPrice } from '@/lib/format';
 
@@ -16,8 +17,8 @@ export default async function Home() {
   const catalog = await getCatalog();
   const cur = catalog?.currency ?? 'EUR';
   const min = (items?: { price: number }[]) => (items?.length ? Math.min(...items.map((i) => i.price)) : 0);
-  // Precio "desde" de una casa: modelo + cubierta + acabado más baratos, más el tamaño indicado.
-  const base = catalog?.modelos.length ? min(catalog.modelos) + min(catalog.cubiertas) + min(catalog.acabados) : null;
+  // Precio "desde" de un modelo: su precio más la cubierta y el acabado más baratos.
+  const extras = catalog ? min(catalog.cubiertas) + min(catalog.acabados) : 0;
   const cubierta = catalog?.cubiertas[0];
   const acabado = catalog?.acabados[0];
 
@@ -27,29 +28,33 @@ export default async function Home() {
         <div className="hero-copy">
           <p className="eyebrow">Llave en mano · Precio cerrado</p>
           <h1>Tu casa prefabricada, sin letra pequeña.</h1>
-          {base !== null && <p className="hero-sub">Desde {formatPrice(base + min(catalog?.tamanos), cur)}</p>}
+          {catalog?.modelos.length ? <p className="hero-sub">Desde {formatPrice(min(catalog.modelos) + extras, cur)}</p> : null}
           <div className="hero-actions">
             <Link href="/encargar" className="btn btn-primary">Encargar casa</Link>
-            <Link href="#tamanos" className="btn btn-light">Ver tamaños</Link>
+            <Link href="#modelos" className="btn btn-light">Ver modelos</Link>
           </div>
         </div>
         <HouseIllustration className="hero-house" m2={70} forma="dos_aguas" color="#23272d" showDimension={false} />
       </section>
 
-      {catalog && catalog.tamanos.length > 0 && (
-        <section id="tamanos" className="section">
+      {catalog && catalog.modelos.length > 0 && (
+        <section id="modelos" className="section">
           <div className="section-head">
-            <h2>Tamaños para cada forma de vivir</h2>
+            <h2>Un modelo para cada forma de vivir</h2>
             <p>Todos personalizables. Elige el tuyo y configúralo a tu medida.</p>
           </div>
           <div className="cards">
-            {catalog.tamanos.map((t) => (
-              <article key={t.id} className="card">
-                <HouseIllustration m2={t.m2 || 70} forma={cubierta?.forma} color={acabado?.color} showDimension={false} />
+            {catalog.modelos.map((m) => (
+              <article key={m.id} className="card">
+                {m.image_version > 0 ? (
+                  <ModeloPhoto id={m.id} version={m.image_version} alt={m.name} width={800} />
+                ) : (
+                  <HouseIllustration m2={m.m2 || 70} forma={cubierta?.forma} color={acabado?.color} showDimension={false} />
+                )}
                 <div className="card-body">
-                  <h3>{catalog.modelos[0]?.name} {t.m2 || t.name}</h3>
-                  {base !== null && <p>Desde {formatPrice(base + t.price, cur)}</p>}
-                  <Link href={`/encargar?tamano=${t.id}`} className="btn btn-primary btn-sm">Encargar</Link>
+                  <h3>{m.name}</h3>
+                  <p>{[m.m2 ? `${m.m2} m²` : '', `Desde ${formatPrice(m.price + extras, cur)}`].filter(Boolean).join(' · ')}</p>
+                  <Link href={`/encargar?modelo=${m.id}`} className="btn btn-primary btn-sm">Encargar</Link>
                 </div>
               </article>
             ))}

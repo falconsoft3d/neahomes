@@ -23,14 +23,13 @@ export function clearDraft() {
   } catch {}
 }
 
-/** Resuelve una selección contra el catálogo y suma Modelo + Tamaño + Cubierta + Acabado. */
+/** Resuelve una selección contra el catálogo y suma Modelo + Cubierta + Acabado. */
 export function resolveSelection(catalog: Catalog, s: Selection | null) {
   if (!s) return null;
   const modelo = catalog.modelos.find((m) => m.id === s.modelo_id);
-  const tamano = catalog.tamanos.find((m) => m.id === s.tamano_id);
   const cubierta = catalog.cubiertas.find((m) => m.id === s.cubierta_id);
   const acabado = catalog.acabados.find((m) => m.id === s.acabado_id);
-  if (!modelo || !tamano || !cubierta || !acabado) return null;
-  const total = modelo.price + tamano.price + cubierta.price + acabado.price;
-  return { modelo, tamano, cubierta, acabado, total };
+  if (!modelo || !cubierta || !acabado) return null;
+  const total = modelo.price + cubierta.price + acabado.price;
+  return { modelo, cubierta, acabado, total };
 }

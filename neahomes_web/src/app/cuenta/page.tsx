@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import HouseIllustration from '@/components/HouseIllustration';
+import ModeloPhoto from '@/components/ModeloPhoto';
 import LogoutButton from '@/components/LogoutButton';
 import { getToken, odoo } from '@/lib/odoo';
 import { formatDate, formatPrice } from '@/lib/format';
@@ -60,14 +61,18 @@ export default async function CuentaPage({ searchParams }: Props) {
         <div className="quotes">
           {quotes.map((q) => (
             <article key={q.id} className={`quote${q.name === nueva ? ' is-new' : ''}`}>
-              <HouseIllustration m2={q.tamano_m2 || 70} forma={q.cubierta_forma} color={q.acabado_color} showDimension={false} />
+              {q.modelo_image_version > 0 ? (
+                <ModeloPhoto id={q.modelo_id} version={q.modelo_image_version} alt={q.modelo} width={800} />
+              ) : (
+                <HouseIllustration m2={q.modelo_m2 || 70} forma={q.cubierta_forma} color={q.acabado_color} showDimension={false} />
+              )}
               <div className="quote-body">
                 <div className="quote-top">
-                  <h3>{q.modelo} {q.tamano_m2 || ''}</h3>
+                  <h3>{q.modelo}</h3>
                   <span className="badge">{q.stage}</span>
                 </div>
                 <p className="muted">{q.name} · {formatDate(q.date)}</p>
-                <p>{[q.tamano, q.cubierta, q.acabado].join(' · ')}</p>
+                <p>{[q.modelo_m2 ? `${q.modelo_m2} m²` : '', q.cubierta, q.acabado].filter(Boolean).join(' · ')}</p>
                 <p className="quote-total">{formatPrice(q.amount_total, cur)}</p>
               </div>
             </article>

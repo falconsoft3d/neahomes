@@ -17,17 +17,6 @@ class NeahomesCatalogMixin(models.AbstractModel):
         return {'id': self.id, 'name': self.name, 'price': self.price}
 
 
-class NeahomesTamano(models.Model):
-    _name = 'neahomes.tamano'
-    _inherit = 'neahomes.catalog.mixin'
-    _description = 'Tamaño'
-
-    m2 = fields.Integer(string='Metros cuadrados')
-
-    def _api_values(self):
-        return dict(super()._api_values(), m2=self.m2)
-
-
 class NeahomesCubierta(models.Model):
     _name = 'neahomes.cubierta'
     _inherit = 'neahomes.catalog.mixin'
@@ -61,7 +50,15 @@ class NeahomesModelo(models.Model):
     _inherit = 'neahomes.catalog.mixin'
     _description = 'Modelo'
 
+    m2 = fields.Integer(string='Metros cuadrados')
     description = fields.Char(string='Descripción corta')
+    image = fields.Image(string='Imagen', max_width=1920, max_height=1920)
+
+    def _image_version(self):
+        """0 si no hay imagen; si la hay, un número que cambia al editar (sirve para invalidar caché)."""
+        self.ensure_one()
+        return int(self.write_date.timestamp()) if self.image else 0
 
     def _api_values(self):
-        return dict(super()._api_values(), description=self.description or '')
+        return dict(super()._api_values(), m2=self.m2, description=self.description or '',
+                    image_version=self._image_version())

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import HouseIllustration from './HouseIllustration';
+import ModeloPhoto from './ModeloPhoto';
 import { formatExtra, formatPrice } from '@/lib/format';
 import { resolveSelection, saveDraft } from '@/lib/draft';
 import type { Catalog, Selection } from '@/lib/types';
@@ -18,20 +19,24 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
   const cur = catalog.currency;
   const [sel, setSel] = useState<Selection>({
     modelo_id: pick(catalog.modelos, initial.modelo_id),
-    tamano_id: pick(catalog.tamanos, initial.tamano_id),
     cubierta_id: pick(catalog.cubiertas, initial.cubierta_id),
     acabado_id: pick(catalog.acabados, initial.acabado_id),
   });
+  // Con foto del modelo se alterna entre la foto real y el dibujo que refleja cubierta y acabado.
+  const [view, setView] = useState<'foto' | 'diseno'>('foto');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const r = useMemo(() => resolveSelection(catalog, sel), [catalog, sel]);
-  const set = (key: keyof Selection) => (id: number) => setSel((s) => ({ ...s, [key]: id }));
+  const set = (key: keyof Selection) => (id: number) => {
+    setSel((s) => ({ ...s, [key]: id }));
+    setView(key === 'modelo_id' ? 'foto' : 'diseno');
+  };
 
   if (!r) {
     return (
       <div className="empty-state">
         <h1>Diseñador no disponible</h1>
-        <p>Faltan modelos, tamaños, cubiertas o acabados en Odoo.</p>
+        <p>Faltan modelos, cubiertas o acabados en Odoo.</p>
       </div>
     );
   }
@@ -61,21 +66,37 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
     router.refresh();
   }
 
-  const summary = [r.tamano.name, r.cubierta.name, r.acabado.name].join(' · ');
+  const summary = [r.modelo.m2 ? `${r.modelo.m2} m²` : '', r.cubierta.name, r.acabado.name].filter(Boolean).join(' · ');
   const cta = loggedIn ? 'Guardar cotización' : 'Encargar casa';
 
   return (
     <div className="configurator">
       <section className="cfg-stage">
         <div className="cfg-stage-inner">
-          <HouseIllustration m2={r.tamano.m2 || 70} forma={r.cubierta.forma} color={r.acabado.color} className="cfg-house" />
-          <p className="cfg-caption">Alzado frontal · ilustración orientativa</p>
+          {r.modelo.image_version > 0 && view === 'foto' ? (
+            <ModeloPhoto key={r.modelo.id} id={r.modelo.id} version={r.modelo.image_version} alt={r.modelo.name} className="cfg-photo" />
+          ) : (
+            <>
+              <HouseIllustration m2={r.modelo.m2 || 70} forma={r.cubierta.forma} color={r.acabado.color} className="cfg-house" />
+              <p className="cfg-caption">Alzado frontal · ilustración orientativa</p>
+            </>
+          )}
+          {r.modelo.image_version > 0 && (
+            <div className="view-toggle" role="group" aria-label="Vista">
+              <button type="button" className={view === 'foto' ? 'is-selected' : ''} onClick={() => setView('foto')} aria-pressed={view === 'foto'}>
+                Foto
+              </button>
+              <button type="button" className={view === 'diseno' ? 'is-selected' : ''} onClick={() => setView('diseno')} aria-pressed={view === 'diseno'}>
+                Tu diseño
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
       <aside className="cfg-panel">
         <header className="cfg-title">
-          <h1>{r.modelo.name} {r.tamano.m2 ? r.tamano.m2 : ''}</h1>
+          <h1>{r.modelo.name}</h1>
           <p>Llave en mano · Precio cerrado</p>
         </header>
 
@@ -92,31 +113,13 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
               >
                 <span>
                   <strong>{m.name}</strong>
-                  {m.description && <small>{m.description}</small>}
+                  <small>{[m.m2 ? `${m.m2} m²` : '', m.description].filter(Boolean).join(' · ')}</small>
                 </span>
                 <span className="option-price">{formatPrice(m.price, cur)}</span>
               </button>
             ))}
           </div>
         )}
-
-        <div className="cfg-group">
-          <h2>Tamaño</h2>
-          <div className="segmented">
-            {catalog.tamanos.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className={`segment${t.id === sel.tamano_id ? ' is-selected' : ''}`}
-                onClick={() => set('tamano_id')(t.id)}
-                aria-pressed={t.id === sel.tamano_id}
-              >
-                <strong>{t.name}</strong>
-                <small>{formatExtra(t.price, cur)}</small>
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="cfg-group">
           <h2>Cubierta</h2>
@@ -160,8 +163,7 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
         <div className="cfg-group cfg-summary">
           <h2>Resumen</h2>
           <dl>
-            <div><dt>{r.modelo.name}</dt><dd>{formatPrice(r.modelo.price, cur)}</dd></div>
-            <div><dt>Tamaño {r.tamano.name}</dt><dd>{formatExtra(r.tamano.price, cur)}</dd></div>
+            <div><dt>{r.modelo.name}{r.modelo.m2 ? ` · ${r.modelo.m2} m²` : ''}</dt><dd>{formatPrice(r.modelo.price, cur)}</dd></div>
             <div><dt>Cubierta {r.cubierta.name.toLowerCase()}</dt><dd>{formatExtra(r.cubierta.price, cur)}</dd></div>
             <div><dt>Acabado {r.acabado.name.toLowerCase()}</dt><dd>{formatExtra(r.acabado.price, cur)}</dd></div>
             <div className="total"><dt>Total</dt><dd>{formatPrice(r.total, cur)}</dd></div>

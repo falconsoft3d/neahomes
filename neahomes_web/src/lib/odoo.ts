@@ -29,6 +29,18 @@ export async function odoo<T = Record<string, unknown>>(
   }
 }
 
+/** Respuesta binaria (imágenes) desde la API de Odoo. */
+export async function odooRaw(path: string): Promise<Response | null> {
+  const base = process.env.ODOO_URL ?? 'http://localhost:8069';
+  const headers: Record<string, string> = {};
+  if (process.env.ODOO_API_KEY) headers['X-Neahomes-Key'] = process.env.ODOO_API_KEY;
+  try {
+    return await fetch(`${base}/neahomes/api${path}`, { headers, cache: 'no-store' });
+  } catch {
+    return null;
+  }
+}
+
 export async function getCatalog(): Promise<Catalog | null> {
   const res = await odoo<Catalog>('/catalog');
   return res.ok ? res.data : null;

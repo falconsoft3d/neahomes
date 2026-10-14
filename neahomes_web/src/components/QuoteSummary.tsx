@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import HouseIllustration from './HouseIllustration';
+import ModeloPhoto from './ModeloPhoto';
 import { formatExtra, formatPrice } from '@/lib/format';
 import { resolveSelection } from '@/lib/draft';
 import type { Catalog, Selection } from '@/lib/types';
@@ -20,11 +21,14 @@ export default function QuoteSummary({ catalog, draft }: { catalog: Catalog; dra
   }
   return (
     <div className="summary-card">
-      <HouseIllustration m2={r.tamano.m2 || 70} forma={r.cubierta.forma} color={r.acabado.color} showDimension={false} />
-      <h2>{r.modelo.name} {r.tamano.m2 || ''}</h2>
+      {r.modelo.image_version > 0 ? (
+        <ModeloPhoto id={r.modelo.id} version={r.modelo.image_version} alt={r.modelo.name} width={800} />
+      ) : (
+        <HouseIllustration m2={r.modelo.m2 || 70} forma={r.cubierta.forma} color={r.acabado.color} showDimension={false} />
+      )}
+      <h2>{r.modelo.name}</h2>
       <dl>
-        <div><dt>{r.modelo.name}</dt><dd>{formatPrice(r.modelo.price, cur)}</dd></div>
-        <div><dt>Tamaño {r.tamano.name}</dt><dd>{formatExtra(r.tamano.price, cur)}</dd></div>
+        <div><dt>{r.modelo.name}{r.modelo.m2 ? ` · ${r.modelo.m2} m²` : ''}</dt><dd>{formatPrice(r.modelo.price, cur)}</dd></div>
         <div><dt>Cubierta {r.cubierta.name.toLowerCase()}</dt><dd>{formatExtra(r.cubierta.price, cur)}</dd></div>
         <div><dt>Acabado {r.acabado.name.toLowerCase()}</dt><dd>{formatExtra(r.acabado.price, cur)}</dd></div>
         <div className="total"><dt>Total</dt><dd>{formatPrice(r.total, cur)}</dd></div>

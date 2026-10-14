@@ -8,7 +8,6 @@ _logger = logging.getLogger(__name__)
 
 CATALOGS = {
     'modelos': 'neahomes.modelo',
-    'tamanos': 'neahomes.tamano',
     'cubiertas': 'neahomes.cubierta',
     'acabados': 'neahomes.acabado',
 }
@@ -53,6 +52,17 @@ class NeahomesApi(http.Controller):
         }
         data['currency'] = request.env['neahomes.cotizacion'].sudo()._get_company().currency_id.name
         return self._json(data)
+
+    @http.route('/neahomes/api/modelo/<int:modelo_id>/image', type='http', auth='public', methods=['GET'], csrf=False)
+    def modelo_image(self, modelo_id, width=0, **kw):
+        if (err := self._guard()):
+            return err
+        modelo = request.env['neahomes.modelo'].sudo().browse(modelo_id).exists()
+        if not modelo or not modelo.active or not modelo.image:
+            return self._error('Imagen no encontrada', 404)
+        width = min(int(width), 1920) if str(width).isdigit() else 0
+        stream = request.env['ir.binary']._get_image_stream_from(modelo, 'image', width=width)
+        return stream.get_response()
 
     @http.route('/neahomes/api/settings', type='http', auth='public', methods=['GET'], csrf=False)
     def settings(self, **kw):
