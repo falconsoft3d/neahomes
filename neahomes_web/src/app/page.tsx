@@ -20,7 +20,6 @@ export default async function Home() {
   const min = (items?: { price: number }[]) => (items?.length ? Math.min(...items.map((i) => i.price)) : 0);
   // Precio "desde" de un modelo: su precio más la cubierta y el acabado más baratos.
   const extras = catalog ? min(catalog.cubiertas) + min(catalog.acabados) : 0;
-  const cubierta = catalog?.cubiertas[0];
   const acabado = catalog?.acabados[0];
 
   return (
@@ -55,7 +54,7 @@ export default async function Home() {
                 {m.image_version > 0 ? (
                   <ModeloPhoto id={m.id} version={m.image_version} alt={m.name} width={800} />
                 ) : (
-                  <HouseIllustration m2={m.m2 || 70} forma={cubierta?.forma} color={acabado?.color} showDimension={false} />
+                  <HouseIllustration m2={m.m2 || 70} forma="plana" color={acabado?.color} showDimension={false} />
                 )}
                 <div className="card-body">
                   <h3>{m.name}</h3>
