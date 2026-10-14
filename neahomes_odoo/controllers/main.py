@@ -30,8 +30,8 @@ class NeahomesApi(http.Controller):
             return {}
 
     def _check_api_key(self):
-        expected = request.env['neahomes.parametro'].sudo().get_param('api_key')
-        return not expected or request.httprequest.headers.get('X-Neahomes-Key') == expected
+        expected = (request.env['neahomes.parametro'].sudo().get_param('api_key') or '').strip()
+        return not expected or (request.httprequest.headers.get('X-Neahomes-Key') or '').strip() == expected
 
     def _partner(self):
         auth = request.httprequest.headers.get('Authorization', '')

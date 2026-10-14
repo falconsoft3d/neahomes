@@ -13,7 +13,8 @@ export async function odoo<T = Record<string, unknown>>(
 ): Promise<OdooResult<T>> {
   const base = process.env.ODOO_URL ?? 'http://localhost:8069';
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (process.env.ODOO_API_KEY) headers['X-Neahomes-Key'] = process.env.ODOO_API_KEY;
+  const apiKey = process.env.ODOO_API_KEY?.trim();
+  if (apiKey) headers['X-Neahomes-Key'] = apiKey;
   if (token) headers.Authorization = `Bearer ${token}`;
   try {
     const res = await fetch(`${base}/neahomes/api${path}`, {
@@ -23,8 +24,13 @@ export async function odoo<T = Record<string, unknown>>(
       cache: 'no-store',
     });
     const data = await res.json().catch(() => ({ error: 'Respuesta no válida de Odoo' }));
+    // 401 de sesión es normal (token caducado); 401 de API key o cualquier otro fallo se deja en los logs.
+    if (!res.ok && !(res.status === 401 && token && data.error !== 'API key inválida')) {
+      console.error(`[odoo] ${method} ${path} → ${res.status}: ${data.error ?? ''} (ODOO_URL=${base})`);
+    }
     return { ok: res.ok, status: res.status, data };
-  } catch {
+  } catch (err) {
+    console.error(`[odoo] ${method} ${path} → sin conexión con ${base}:`, err);
     return { ok: false, status: 503, data: { error: 'No se pudo conectar con Odoo' } as T & { error: string } };
   }
 }
@@ -33,7 +39,8 @@ export async function odoo<T = Record<string, unknown>>(
 export async function odooRaw(path: string): Promise<Response | null> {
   const base = process.env.ODOO_URL ?? 'http://localhost:8069';
   const headers: Record<string, string> = {};
-  if (process.env.ODOO_API_KEY) headers['X-Neahomes-Key'] = process.env.ODOO_API_KEY;
+  const apiKey = process.env.ODOO_API_KEY?.trim();
+  if (apiKey) headers['X-Neahomes-Key'] = apiKey;
   try {
     return await fetch(`${base}/neahomes/api${path}`, { headers, cache: 'no-store' });
   } catch {
