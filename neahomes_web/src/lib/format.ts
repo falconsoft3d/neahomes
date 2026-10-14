@@ -11,6 +11,8 @@ export function formatExtra(value: number, currency = 'EUR') {
 }
 
 export function formatDate(value: string) {
-  const d = new Date(value.replace(' ', 'T') + 'Z');
+  // Odoo envía fechas ('2026-10-14') o fechas con hora en UTC ('2026-10-14 08:00:00').
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T12:00:00Z` : `${value.replace(' ', 'T')}Z`;
+  const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? value : d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import CookieBanner from '@/components/CookieBanner';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import './globals.css';
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main>{children}</main>
         <Footer />
+        <CookieBanner />
       </body>
     </html>
   );

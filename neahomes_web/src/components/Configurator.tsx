@@ -1,20 +1,21 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import HouseIllustration from './HouseIllustration';
+import ConditionsCheckbox from './ConditionsCheckbox';
 import ModeloPhoto from './ModeloPhoto';
 import { formatExtra, formatPrice } from '@/lib/format';
-import { resolveSelection, saveDraft } from '@/lib/draft';
-import type { Catalog, Selection } from '@/lib/types';
+import { resolveSelection, saveAcceptance, saveDraft } from '@/lib/draft';
+import type { Catalog, Conditions, Selection } from '@/lib/types';
 
-type Props = { catalog: Catalog; loggedIn: boolean; initial: Partial<Selection> };
+type Props = { catalog: Catalog; loggedIn: boolean; initial: Partial<Selection>; conditions: Conditions | null };
 
 function pick<T extends { id: number }>(items: T[], id?: number) {
   return (items.find((i) => i.id === id) ?? items[0])?.id ?? 0;
 }
 
-export default function Configurator({ catalog, loggedIn, initial }: Props) {
+export default function Configurator({ catalog, loggedIn, initial, conditions }: Props) {
   const router = useRouter();
   const cur = catalog.currency;
   const [sel, setSel] = useState<Selection>({
@@ -27,6 +28,9 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
   // Distribución: por defecto 0 de cada elemento; se reinicia al cambiar de modelo.
   const [dist, setDist] = useState<Record<number, number>>({});
   const [saving, setSaving] = useState(false);
+  // Sin aceptar las condiciones de venta no se puede continuar (Odoo también lo comprueba).
+  const [accepted, setAccepted] = useState(false);
+  const acceptRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
   const r = useMemo(() => resolveSelection(catalog, sel), [catalog, sel]);
   const set = (key: keyof Selection) => (id: number) => {
@@ -47,6 +51,13 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
   async function encargar() {
     setError('');
     const selection: Selection = { ...sel, distribuciones: dist };
+    if (conditions && !accepted) {
+      setError('Acepta las condiciones de venta para continuar.');
+      acceptRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      acceptRef.current?.focus({ preventScroll: true });
+      return;
+    }
+    if (conditions) saveAcceptance(conditions.id);
     if (!loggedIn) {
       saveDraft(selection);
       router.push('/registro');
@@ -56,7 +67,7 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
     const res = await fetch('/api/quotes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ selection }),
+      body: JSON.stringify({ selection, accept_conditions: conditions?.id }),
     });
     const data = await res.json().catch(() => ({}));
     if (res.status === 401) {
@@ -208,6 +219,17 @@ export default function Configurator({ catalog, loggedIn, initial }: Props) {
             <div className="total"><dt>Total</dt><dd>{formatPrice(r.total, cur)}</dd></div>
           </dl>
           <p className="fine">Incluye transporte, montaje y climatización. Impuestos no incluidos.</p>
+          {conditions && (
+            <ConditionsCheckbox
+              ref={acceptRef}
+              conditions={conditions}
+              checked={accepted}
+              onChange={(v) => {
+                setAccepted(v);
+                if (v) setError('');
+              }}
+            />
+          )}
         </div>
       </aside>
 

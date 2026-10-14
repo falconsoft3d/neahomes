@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import CookieSettingsButton from './CookieSettingsButton';
 import { getSettings } from '@/lib/odoo';
 
 export default async function Footer() {
@@ -9,6 +10,9 @@ export default async function Footer() {
       <Link href="/encargar">Encargar casa</Link>
       <Link href="/contacto">Contacto</Link>
       <Link href="/login">Mi cuenta</Link>
+      <Link href="/condiciones">Condiciones de venta</Link>
+      <Link href="/cookies">Política de cookies</Link>
+      <CookieSettingsButton />
       {instagram_url && (
         <a href={instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="footer-social">
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>

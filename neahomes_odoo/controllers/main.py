@@ -1,3 +1,4 @@
+import functools
 import json
 import logging
 
@@ -13,6 +14,20 @@ CATALOGS = {
     'cubiertas': 'neahomes.cubierta',
     'acabados': 'neahomes.acabado',
 }
+
+
+def json_errors(func):
+    """Cualquier error inesperado de la API se registra y se devuelve como JSON, no como página HTML."""
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except Exception as e:  # noqa: BLE001 - la API siempre debe responder JSON
+            _logger.exception('NeaHomes API: error en %s', request.httprequest.path)
+            request.env.cr.rollback()
+            message = getattr(e, 'args', [None])[0] or str(e) or e.__class__.__name__
+            return request.make_json_response({'error': f'Error en Odoo: {message}'}, status=500)
+    return wrapper
 
 
 class NeahomesApi(http.Controller):
@@ -44,12 +59,36 @@ class NeahomesApi(http.Controller):
         token = auth[7:] if auth.startswith('Bearer ') else ''
         return request.env['res.partner'].sudo()._nea_from_token(token)
 
+    def _conditions_check(self, body):
+        """Condiciones vigentes y error si el cliente no las ha aceptado (sin condiciones activas no se exige nada)."""
+        current = request.env['neahomes.condicion']._current()
+        if not current:
+            return current, None
+        accepted = body.get('accept_conditions')
+        if not accepted:
+            return current, self._error('Debes aceptar las condiciones de venta para guardar la cotización.', 400)
+        if str(accepted) != str(current.id):
+            return current, self._error('Las condiciones de venta han cambiado: revísalas y acéptalas de nuevo.', 409)
+        return current, None
+
+    def _register_acceptance(self, partner, condicion, quote):
+        if not condicion:
+            return
+        headers = request.httprequest.headers
+        # Next.js reenvía la IP y el navegador del cliente; si se llama directo, se usan los de la petición.
+        request.env['neahomes.condicion.aceptacion']._record(
+            partner, condicion, quote,
+            ip=headers.get('X-Neahomes-Client-IP') or request.httprequest.remote_addr,
+            user_agent=headers.get('X-Neahomes-Client-UA') or headers.get('User-Agent'),
+        )
+
     def _guard(self):
         reason = self._api_key_error()
         return self._error(reason, 401) if reason else None
 
     # -------------------------------------------------------------- endpoints
     @http.route('/neahomes/api/catalog', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
     def catalog(self, **kw):
         if (err := self._guard()):
             return err
@@ -68,12 +107,14 @@ class NeahomesApi(http.Controller):
         return request.env['ir.binary']._get_image_stream_from(record, 'image', width=width).get_response()
 
     @http.route('/neahomes/api/modelo/<int:modelo_id>/image', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
     def modelo_image(self, modelo_id, width=0, **kw):
         if (err := self._guard()):
             return err
         return self._image_response('neahomes.modelo', modelo_id, width, 1920)
 
     @http.route('/neahomes/api/slides', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
     def slides(self, **kw):
         if (err := self._guard()):
             return err
@@ -81,19 +122,25 @@ class NeahomesApi(http.Controller):
         return self._json({'slides': [s._api_values() for s in slides]})
 
     @http.route('/neahomes/api/slide/<int:slide_id>/image', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
     def slide_image(self, slide_id, width=0, **kw):
         if (err := self._guard()):
             return err
         return self._image_response('neahomes.slide', slide_id, width, 2560)
 
     @http.route('/neahomes/api/settings', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
     def settings(self, **kw):
         if (err := self._guard()):
             return err
         Param = request.env['neahomes.parametro'].sudo()
-        return self._json({'instagram_url': Param.get_param('instagram_url', '')})
+        return self._json({
+            'instagram_url': Param.get_param('instagram_url', ''),
+            'legal': {key: Param.get_param(f'legal_{key}', '') for key in ('company', 'nif', 'address', 'email')},
+        })
 
     @http.route('/neahomes/api/contact', type='http', auth='public', methods=['POST'], csrf=False)
+    @json_errors
     def contact(self, **kw):
         if (err := self._guard()):
             return err
@@ -109,7 +156,16 @@ class NeahomesApi(http.Controller):
         request.env['neahomes.contacto'].sudo().create(vals)
         return self._json({'ok': True})
 
+    @http.route('/neahomes/api/conditions', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
+    def conditions(self, **kw):
+        if (err := self._guard()):
+            return err
+        current = request.env['neahomes.condicion']._current()
+        return self._json({'conditions': current._api_values() if current else None})
+
     @http.route('/neahomes/api/register', type='http', auth='public', methods=['POST'], csrf=False)
+    @json_errors
     def register(self, **kw):
         if (err := self._guard()):
             return err
@@ -123,6 +179,11 @@ class NeahomesApi(http.Controller):
         Partner = request.env['res.partner'].sudo()
         if Partner.search_count([('nea_user', '=', user)]):
             return self._error('Ese usuario ya está registrado.', 409)
+        condicion = None
+        if body.get('selection'):
+            condicion, err = self._conditions_check(body)
+            if err:
+                return err
         try:
             partner = Partner.create({
                 'name': name,
@@ -135,6 +196,7 @@ class NeahomesApi(http.Controller):
             quote = None
             if body.get('selection'):
                 quote = request.env['neahomes.cotizacion'].sudo().create_from_selection(partner, body['selection'])
+                self._register_acceptance(partner, condicion, quote)
         except ValueError as e:
             request.env.cr.rollback()
             return self._error(str(e))
@@ -145,6 +207,7 @@ class NeahomesApi(http.Controller):
         })
 
     @http.route('/neahomes/api/login', type='http', auth='public', methods=['POST'], csrf=False)
+    @json_errors
     def login(self, **kw):
         if (err := self._guard()):
             return err
@@ -157,6 +220,7 @@ class NeahomesApi(http.Controller):
         return self._json({'token': partner._nea_new_token(), 'partner': partner._nea_api_values()})
 
     @http.route('/neahomes/api/logout', type='http', auth='public', methods=['POST'], csrf=False)
+    @json_errors
     def logout(self, **kw):
         if (err := self._guard()):
             return err
@@ -166,6 +230,7 @@ class NeahomesApi(http.Controller):
         return self._json({'ok': True})
 
     @http.route('/neahomes/api/me', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
     def me(self, **kw):
         if (err := self._guard()):
             return err
@@ -179,6 +244,7 @@ class NeahomesApi(http.Controller):
         })
 
     @http.route('/neahomes/api/tickets', type='http', auth='public', methods=['POST'], csrf=False)
+    @json_errors
     def create_ticket(self, **kw):
         if (err := self._guard()):
             return err
@@ -205,6 +271,7 @@ class NeahomesApi(http.Controller):
         return self._json({'ticket': ticket._api_values(viewer=partner)})
 
     @http.route('/neahomes/api/tickets/<int:ticket_id>/reply', type='http', auth='public', methods=['POST'], csrf=False)
+    @json_errors
     def reply_ticket(self, ticket_id, **kw):
         if (err := self._guard()):
             return err
@@ -230,6 +297,7 @@ class NeahomesApi(http.Controller):
         return partner, None
 
     @http.route('/neahomes/api/crm', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
     def crm(self, **kw):
         if (err := self._guard()):
             return err
@@ -245,6 +313,7 @@ class NeahomesApi(http.Controller):
         })
 
     @http.route('/neahomes/api/crm/quote/<int:quote_id>/state', type='http', auth='public', methods=['POST'], csrf=False)
+    @json_errors
     def crm_move_quote(self, quote_id, **kw):
         if (err := self._guard()):
             return err
@@ -265,20 +334,26 @@ class NeahomesApi(http.Controller):
         return self._json({'quote': quote._crm_values()})
 
     @http.route('/neahomes/api/quotes', type='http', auth='public', methods=['POST'], csrf=False)
+    @json_errors
     def create_quote(self, **kw):
         if (err := self._guard()):
             return err
         partner = self._partner()
         if not partner:
             return self._error('Sesión no válida', 401)
+        body = self._body()
+        condicion, err = self._conditions_check(body)
+        if err:
+            return err
         try:
-            quote = request.env['neahomes.cotizacion'].sudo().create_from_selection(
-                partner, self._body().get('selection') or {})
+            quote = request.env['neahomes.cotizacion'].sudo().create_from_selection(partner, body.get('selection') or {})
         except ValueError as e:
             return self._error(str(e))
+        self._register_acceptance(partner, condicion, quote)
         return self._json({'quote': quote._api_values()})
 
     @http.route('/neahomes/api/password', type='http', auth='public', methods=['POST'], csrf=False)
+    @json_errors
     def change_password(self, **kw):
         if (err := self._guard()):
             return err

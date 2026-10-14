@@ -10,3 +10,6 @@ access_neahomes_ticket_user,neahomes.ticket.user,model_neahomes_ticket,base.grou
 access_neahomes_slide_user,neahomes.slide.user,model_neahomes_slide,base.group_user,1,1,1,1
 access_neahomes_distribucion_user,neahomes.distribucion.user,model_neahomes_distribucion,base.group_user,1,1,1,1
 access_neahomes_cotizacion_distribucion_user,neahomes.cotizacion.distribucion.user,model_neahomes_cotizacion_distribucion,base.group_user,1,1,1,1
+access_neahomes_condicion_user,neahomes.condicion.user,model_neahomes_condicion,base.group_user,1,1,1,1
+access_neahomes_condicion_aceptacion_user,neahomes.condicion.aceptacion.user,model_neahomes_condicion_aceptacion,base.group_user,1,0,0,0
+access_neahomes_condicion_aceptacion_system,neahomes.condicion.aceptacion.system,model_neahomes_condicion_aceptacion,base.group_system,1,0,0,1

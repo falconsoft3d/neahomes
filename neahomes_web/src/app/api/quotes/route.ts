@@ -5,6 +5,6 @@ export async function POST(req: Request) {
   const token = await getToken();
   if (!token) return NextResponse.json({ error: 'Sesión no válida' }, { status: 401 });
   const body = await req.json().catch(() => ({}));
-  const res = await odoo('/quotes', { method: 'POST', body, token });
+  const res = await odoo('/quotes', { method: 'POST', body, token, client: req });
   return NextResponse.json(res.data, { status: res.status });
 }

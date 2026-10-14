@@ -31,6 +31,7 @@ class NeahomesCotizacion(models.Model):
     lead_id = fields.Many2one('crm.lead', string='Oportunidad', ondelete='set null')
     ticket_ids = fields.One2many('neahomes.ticket', 'cotizacion_id', string='Tickets')
     distribucion_ids = fields.One2many('neahomes.cotizacion.distribucion', 'cotizacion_id', string='Distribución')
+    aceptacion_ids = fields.One2many('neahomes.condicion.aceptacion', 'cotizacion_id', string='Condiciones aceptadas')
     stage_id = fields.Many2one(related='lead_id.stage_id', string='Etapa')
     company_id = fields.Many2one('res.company', string='Compañía')
 
@@ -88,11 +89,29 @@ class NeahomesCotizacion(models.Model):
             f'Total: {self.amount_total:,.2f}',
         ])
 
+    def _lead_salesperson(self, company):
+        """Vendedor y equipo de la oportunidad, siempre de la compañía de la oportunidad.
+
+        Si no se indican, Odoo usa el usuario actual, que desde la web es el usuario público
+        (de otra compañía) y la creación falla por compañías incompatibles."""
+        self.ensure_one()
+        user = self.comercial_id.user_ids.filtered(lambda u: not u.share and company in u.company_ids)[:1]
+        team = self.env['crm.team']
+        if user:
+            team = team.sudo().search([
+                ('company_id', 'in', [False, company.id]), ('use_opportunities', '=', True),
+                '|', ('user_id', '=', user.id), ('member_ids', 'in', user.ids),
+            ], limit=1)
+        return user, team
+
     def action_create_lead(self):
         """Crea la oportunidad del CRM en la compañía definida por el parámetro ci_company."""
         for rec in self.filtered(lambda r: not r.lead_id):
             company = rec._get_company()
+            user, team = rec._lead_salesperson(company)
             lead = self.env['crm.lead'].sudo().with_company(company).create({
+                'user_id': user.id or False,
+                'team_id': team.id or False,
                 'name': f'{rec.name} · {rec.modelo_id.name}',
                 'type': 'opportunity',
                 'partner_id': rec.partner_id.id,

@@ -1,6 +1,23 @@
 import type { Catalog, Selection } from './types';
 
 const KEY = 'neahomes_draft';
+/** Id de las condiciones de venta que el usuario aceptó al diseñar (se envía al guardar la cotización). */
+const ACCEPT_KEY = 'neahomes_conditions';
+
+export function saveAcceptance(conditionsId: number) {
+  try {
+    localStorage.setItem(ACCEPT_KEY, String(conditionsId));
+  } catch {}
+}
+
+export function loadAcceptance(): number | null {
+  try {
+    const raw = localStorage.getItem(ACCEPT_KEY);
+    return raw ? Number(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function saveDraft(selection: Selection) {
   try {
@@ -20,6 +37,7 @@ export function loadDraft(): Selection | null {
 export function clearDraft() {
   try {
     localStorage.removeItem(KEY);
+    localStorage.removeItem(ACCEPT_KEY);
   } catch {}
 }
 

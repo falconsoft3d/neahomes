@@ -191,6 +191,15 @@
                             <field name="amount_total" class="fw-bold"/>
                         </group>
                     </group>
+                    <group string="Condiciones de venta aceptadas" invisible="not aceptacion_ids">
+                        <field name="aceptacion_ids" nolabel="1" colspan="2" readonly="1">
+                            <tree>
+                                <field name="date"/>
+                                <field name="condicion_name"/>
+                                <field name="ip"/>
+                            </tree>
+                        </field>
+                    </group>
                     <group string="Distribución" invisible="not distribucion_ids">
                         <field name="distribucion_ids" nolabel="1" colspan="2" readonly="1">
                             <tree>
@@ -255,6 +264,114 @@
         <field name="res_model">neahomes.distribucion</field>
         <field name="view_mode">tree</field>
         <field name="context">{'search_default_group_modelo': 1}</field>
+    </record>
+
+    <!-- Condiciones de venta -->
+    <record id="view_neahomes_condicion_tree" model="ir.ui.view">
+        <field name="name">neahomes.condicion.tree</field>
+        <field name="model">neahomes.condicion</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="date"/>
+                <field name="name"/>
+                <field name="aceptacion_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_neahomes_condicion_form" model="ir.ui.view">
+        <field name="name">neahomes.condicion.form</field>
+        <field name="model">neahomes.condicion</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Archivada" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Título"/></h1>
+                    </div>
+                    <group>
+                        <field name="date"/>
+                        <field name="active" invisible="1"/>
+                    </group>
+                    <div class="text-muted mb-3">
+                        La web muestra las condiciones activas más recientes y exige aceptarlas para guardar una cotización.
+                        Para cambiarlas sin perder el historial, crea unas nuevas y archiva las anteriores.
+                    </div>
+                    <field name="body"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_neahomes_condicion" model="ir.actions.act_window">
+        <field name="name">Condiciones</field>
+        <field name="res_model">neahomes.condicion</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <record id="view_neahomes_aceptacion_tree" model="ir.ui.view">
+        <field name="name">neahomes.condicion.aceptacion.tree</field>
+        <field name="model">neahomes.condicion.aceptacion</field>
+        <field name="arch" type="xml">
+            <tree create="false" edit="false">
+                <field name="date"/>
+                <field name="partner_id"/>
+                <field name="cotizacion_id"/>
+                <field name="condicion_name"/>
+                <field name="ip" optional="show"/>
+                <field name="user_agent" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_neahomes_aceptacion_form" model="ir.ui.view">
+        <field name="name">neahomes.condicion.aceptacion.form</field>
+        <field name="model">neahomes.condicion.aceptacion</field>
+        <field name="arch" type="xml">
+            <form create="false" edit="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="date"/>
+                            <field name="partner_id"/>
+                            <field name="cotizacion_id"/>
+                        </group>
+                        <group>
+                            <field name="condicion_id"/>
+                            <field name="ip"/>
+                            <field name="user_agent"/>
+                        </group>
+                    </group>
+                    <separator string="Texto aceptado"/>
+                    <field name="condicion_name" class="fw-bold"/>
+                    <field name="condicion_body"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_neahomes_aceptacion_search" model="ir.ui.view">
+        <field name="name">neahomes.condicion.aceptacion.search</field>
+        <field name="model">neahomes.condicion.aceptacion</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="partner_id"/>
+                <field name="cotizacion_id"/>
+                <field name="condicion_id"/>
+                <group expand="0" string="Agrupar por">
+                    <filter name="group_condicion" string="Condiciones" context="{'group_by': 'condicion_id'}"/>
+                    <filter name="group_partner" string="Cliente" context="{'group_by': 'partner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_neahomes_aceptacion" model="ir.actions.act_window">
+        <field name="name">Aceptaciones</field>
+        <field name="res_model">neahomes.condicion.aceptacion</field>
+        <field name="view_mode">tree,form</field>
     </record>
 
     <!-- Tickets -->
@@ -563,6 +680,11 @@
     <menuitem id="menu_neahomes_contacto" name="Formulario de contacto" parent="menu_neahomes_root"
               action="action_neahomes_contacto" sequence="50"/>
 
+    <menuitem id="menu_neahomes_condiciones" name="Condiciones de venta" parent="menu_neahomes_root" sequence="85"/>
+    <menuitem id="menu_neahomes_condicion" name="Condiciones" parent="menu_neahomes_condiciones"
+              action="action_neahomes_condicion" sequence="10"/>
+    <menuitem id="menu_neahomes_aceptacion" name="Aceptaciones" parent="menu_neahomes_condiciones"
+              action="action_neahomes_aceptacion" sequence="20"/>
     <menuitem id="menu_neahomes_web" name="Web" parent="menu_neahomes_root" sequence="90"/>
     <menuitem id="menu_neahomes_slide" name="Carrusel" parent="menu_neahomes_web"
               action="action_neahomes_slide" sequence="10"/>

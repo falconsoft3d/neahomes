@@ -24,6 +24,23 @@
         <field name="name">instagram_url</field>
         <field name="valor">https://www.instagram.com/</field>
     </record>
+    <!-- Datos del responsable para la política de cookies de la web -->
+    <record id="param_legal_company" model="neahomes.parametro">
+        <field name="name">legal_company</field>
+        <field name="valor">NEA HOMES EXPERIENCE, S.L.</field>
+    </record>
+    <record id="param_legal_nif" model="neahomes.parametro">
+        <field name="name">legal_nif</field>
+        <field name="valor"></field>
+    </record>
+    <record id="param_legal_address" model="neahomes.parametro">
+        <field name="name">legal_address</field>
+        <field name="valor"></field>
+    </record>
+    <record id="param_legal_email" model="neahomes.parametro">
+        <field name="name">legal_email</field>
+        <field name="valor"></field>
+    </record>
     <record id="param_api_key" model="neahomes.parametro">
         <field name="name">api_key</field>
         <field name="valor"></field>

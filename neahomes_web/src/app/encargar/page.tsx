@@ -1,12 +1,12 @@
 import Configurator from '@/components/Configurator';
-import { getCatalog, getToken } from '@/lib/odoo';
+import { getCatalog, getConditions, getToken } from '@/lib/odoo';
 
 export const dynamic = 'force-dynamic';
 
 type Props = { searchParams: Promise<Record<string, string | undefined>> };
 
 export default async function EncargarPage({ searchParams }: Props) {
-  const [catalog, token, params] = await Promise.all([getCatalog(), getToken(), searchParams]);
+  const [catalog, token, params, conditions] = await Promise.all([getCatalog(), getToken(), searchParams, getConditions()]);
   if (!catalog) {
     return (
       <div className="empty-state">
@@ -20,6 +20,7 @@ export default async function EncargarPage({ searchParams }: Props) {
     <Configurator
       catalog={catalog}
       loggedIn={Boolean(token)}
+      conditions={conditions}
       initial={{
         modelo_id: num(params.modelo),
         cubierta_id: num(params.cubierta),

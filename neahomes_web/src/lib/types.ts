@@ -32,6 +32,8 @@ export type Slide = {
   button2_url: string;
 };
 
+export type Conditions = { id: number; name: string; date: string; body: string };
+
 export type Partner = { id: number; name: string; email: string; phone: string; user: string; comercial: boolean };
 
 export type Quote = {

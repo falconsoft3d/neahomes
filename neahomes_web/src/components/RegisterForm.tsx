@@ -3,17 +3,23 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import ConditionsCheckbox from './ConditionsCheckbox';
 import QuoteSummary from './QuoteSummary';
-import { clearDraft, loadDraft } from '@/lib/draft';
-import type { Catalog, Selection } from '@/lib/types';
+import { clearDraft, loadAcceptance, loadDraft } from '@/lib/draft';
+import type { Catalog, Conditions, Selection } from '@/lib/types';
 
-export default function RegisterForm({ catalog }: { catalog: Catalog | null }) {
+export default function RegisterForm({ catalog, conditions }: { catalog: Catalog | null; conditions: Conditions | null }) {
   const router = useRouter();
   const [draft, setDraft] = useState<Selection | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => setDraft(loadDraft()), []);
+  const [accepted, setAccepted] = useState(false);
+
+  useEffect(() => {
+    setDraft(loadDraft());
+    setAccepted(Boolean(conditions && loadAcceptance() === conditions.id));
+  }, [conditions]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -23,7 +29,7 @@ export default function RegisterForm({ catalog }: { catalog: Catalog | null }) {
     const res = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, selection: draft }),
+      body: JSON.stringify({ ...form, selection: draft, accept_conditions: accepted ? conditions?.id : undefined }),
     });
     const data = await res.json().catch(() => ({}));
     setLoading(false);
@@ -43,6 +49,7 @@ export default function RegisterForm({ catalog }: { catalog: Catalog | null }) {
         <label>Teléfono<input name="phone" type="tel" autoComplete="tel" /></label>
         <label>Usuario<input name="user" required autoComplete="username" autoCapitalize="none" /></label>
         <label>Contraseña<input name="password" type="password" required minLength={6} autoComplete="new-password" /></label>
+        {draft && conditions && <ConditionsCheckbox conditions={conditions} checked={accepted} onChange={setAccepted} />}
         {error && <p className="form-error">{error}</p>}
         <button className="btn btn-primary btn-block" disabled={loading}>
           {loading ? 'Creando cuenta…' : draft ? 'Registrarme y guardar' : 'Crear cuenta'}

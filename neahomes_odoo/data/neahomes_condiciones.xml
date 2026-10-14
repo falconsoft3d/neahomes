@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Condiciones generales de venta de ejemplo: se crean una sola vez y se editan desde NeaHomes > Condiciones de venta. -->
+<odoo noupdate="1">
+    <record id="condicion_general" model="neahomes.condicion">
+        <field name="name">Condiciones generales de venta</field>
+        <field name="body" type="html">
+<div>
+    <h3>1. Objeto</h3>
+    <p>Estas condiciones regulan la cotización de casas prefabricadas NeaHomes realizada a través de la web.</p>
+
+    <h3>2. Qué incluye el precio</h3>
+    <p>El precio de la cotización incluye únicamente los conceptos que aparecen en ella: el modelo de casa con la cubierta, el acabado y la distribución elegidos.</p>
+
+    <h3>3. Qué NO incluye el precio</h3>
+    <ul>
+        <li><strong>El suelo</strong>: el terreno o parcela donde se instala la casa.</li>
+        <li><strong>La cimentación</strong>: losa, zapatas o cualquier otra obra de cimentación necesaria para apoyar la casa.</li>
+        <li>Cualquier otro trabajo o concepto que no figure expresamente en la cotización.</li>
+    </ul>
+    <p>El suelo y la cimentación corren por cuenta del cliente, salvo que se acuerde lo contrario por escrito.</p>
+
+    <h3>4. Naturaleza de la cotización</h3>
+    <p>La cotización es orientativa y no constituye un contrato. La compra solo será firme cuando ambas partes firmen el contrato correspondiente, tras el estudio técnico del proyecto.</p>
+
+    <h3>5. Aceptación</h3>
+    <p>Para guardar una cotización es necesario aceptar estas condiciones. Guardamos la fecha de la aceptación junto a la cotización.</p>
+</div>
+        </field>
+    </record>
+</odoo>
