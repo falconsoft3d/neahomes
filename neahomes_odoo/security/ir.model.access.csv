@@ -6,3 +6,4 @@ access_neahomes_modelo_user,neahomes.modelo.user,model_neahomes_modelo,base.grou
 access_neahomes_cotizacion_user,neahomes.cotizacion.user,model_neahomes_cotizacion,base.group_user,1,1,1,1
 access_neahomes_parametro_user,neahomes.parametro.user,model_neahomes_parametro,base.group_user,1,0,0,0
 access_neahomes_parametro_system,neahomes.parametro.system,model_neahomes_parametro,base.group_system,1,1,1,1
+access_neahomes_contacto_user,neahomes.contacto.user,model_neahomes_contacto,base.group_user,1,1,1,1

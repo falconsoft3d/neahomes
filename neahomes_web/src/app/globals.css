@@ -384,8 +384,23 @@ button {
   color: var(--muted);
 }
 
+.footer {
+  align-items: center;
+  border-top: 1px solid var(--line);
+}
+
 .footer a:hover {
   color: var(--text);
+}
+
+.footer-social {
+  display: inline-flex;
+  color: var(--text);
+}
+
+/* En el diseñador la barra de precio es fija: el footer deja hueco para ella. */
+main:has(.configurator) + .footer {
+  padding-bottom: calc(var(--bar-h) + 40px);
 }
 
 /* ------------------------------------------------------------ configurador */
@@ -734,7 +749,8 @@ dl .total dd {
   font-weight: 500;
 }
 
-.auth-form input {
+.auth-form input,
+.auth-form textarea {
   height: 40px;
   padding: 0 12px;
   font: inherit;
@@ -746,7 +762,14 @@ dl .total dd {
   transition: border-color 0.2s, background-color 0.2s;
 }
 
-.auth-form input:focus {
+.auth-form textarea {
+  height: auto;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.auth-form input:focus,
+.auth-form textarea:focus {
   outline: none;
   background: #fff;
   border-color: var(--text);

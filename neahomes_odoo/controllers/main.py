@@ -54,6 +54,29 @@ class NeahomesApi(http.Controller):
         data['currency'] = request.env['neahomes.cotizacion'].sudo()._get_company().currency_id.name
         return self._json(data)
 
+    @http.route('/neahomes/api/settings', type='http', auth='public', methods=['GET'], csrf=False)
+    def settings(self, **kw):
+        if (err := self._guard()):
+            return err
+        Param = request.env['neahomes.parametro'].sudo()
+        return self._json({'instagram_url': Param.get_param('instagram_url', '')})
+
+    @http.route('/neahomes/api/contact', type='http', auth='public', methods=['POST'], csrf=False)
+    def contact(self, **kw):
+        if (err := self._guard()):
+            return err
+        body = self._body()
+        vals = {
+            'name': (body.get('name') or '').strip(),
+            'email': (body.get('email') or '').strip(),
+            'phone': (body.get('phone') or '').strip() or False,
+            'message': (body.get('message') or '').strip(),
+        }
+        if not (vals['name'] and vals['email'] and vals['message']):
+            return self._error('Nombre, email y texto son obligatorios.')
+        request.env['neahomes.contacto'].sudo().create(vals)
+        return self._json({'ok': True})
+
     @http.route('/neahomes/api/register', type='http', auth='public', methods=['POST'], csrf=False)
     def register(self, **kw):
         if (err := self._guard()):

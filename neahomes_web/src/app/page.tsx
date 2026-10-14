@@ -87,11 +87,6 @@ export default async function Home() {
         ))}
       </section>
 
-      <footer className="footer">
-        <span>NeaHomes © {new Date().getFullYear()}</span>
-        <Link href="/encargar">Encargar casa</Link>
-        <Link href="/login">Mi cuenta</Link>
-      </footer>
     </>
   );
 }

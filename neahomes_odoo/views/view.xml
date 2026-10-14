@@ -219,6 +219,49 @@
         <field name="view_mode">tree,form</field>
     </record>
 
+    <!-- Formulario de contacto -->
+    <record id="view_neahomes_contacto_tree" model="ir.ui.view">
+        <field name="name">neahomes.contacto.tree</field>
+        <field name="model">neahomes.contacto</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="create_date" string="Fecha"/>
+                <field name="name"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="message"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_neahomes_contacto_form" model="ir.ui.view">
+        <field name="name">neahomes.contacto.form</field>
+        <field name="model">neahomes.contacto</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="email" widget="email"/>
+                            <field name="phone" widget="phone"/>
+                        </group>
+                        <group>
+                            <field name="create_date" string="Fecha"/>
+                        </group>
+                    </group>
+                    <field name="message" placeholder="Texto"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_neahomes_contacto" model="ir.actions.act_window">
+        <field name="name">Formulario de contacto</field>
+        <field name="res_model">neahomes.contacto</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
     <!-- Parámetros -->
     <record id="view_neahomes_parametro_tree" model="ir.ui.view">
         <field name="name">neahomes.parametro.tree</field>
@@ -286,6 +329,8 @@
               action="action_neahomes_acabado" sequence="30"/>
     <menuitem id="menu_neahomes_modelo" name="Modelos" parent="menu_neahomes_root"
               action="action_neahomes_modelo" sequence="40"/>
+    <menuitem id="menu_neahomes_contacto" name="Formulario de contacto" parent="menu_neahomes_root"
+              action="action_neahomes_contacto" sequence="50"/>
 
     <menuitem id="menu_neahomes_config" name="Configuración" parent="menu_neahomes_root" sequence="100"/>
     <menuitem id="menu_neahomes_parametro" name="Parámetros" parent="menu_neahomes_config"

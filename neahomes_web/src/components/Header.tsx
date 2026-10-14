@@ -11,6 +11,7 @@ export default async function Header() {
         <Link href="/encargar">Encargar casa</Link>
         <Link href="/#tamanos">Tamaños</Link>
         <Link href="/#precio">Precio cerrado</Link>
+        <Link href="/contacto">Contacto</Link>
       </nav>
       <div className="header-actions">
         <Link href={loggedIn ? '/cuenta' : '/login'} className="header-account">

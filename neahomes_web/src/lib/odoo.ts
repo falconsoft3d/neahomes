@@ -45,3 +45,8 @@ export const tokenCookieOptions = {
   path: '/',
   maxAge: 60 * 60 * 24 * 30,
 };
+
+export async function getSettings(): Promise<{ instagram_url: string }> {
+  const res = await odoo<{ instagram_url: string }>('/settings');
+  return res.ok ? res.data : { instagram_url: '' };
+}
