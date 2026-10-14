@@ -5,8 +5,6 @@ type Props = {
   forma?: Forma;
   color?: string;
   showDimension?: boolean;
-  /** Solo para forma "plana": barandilla de cubierta transitable. */
-  railing?: boolean;
   className?: string;
 };
 
@@ -19,7 +17,6 @@ export default function HouseIllustration({
   forma = 'dos_aguas',
   color = '#23272d',
   showDimension = true,
-  railing = true,
   className,
 }: Props) {
   const ground = 430;
@@ -34,13 +31,14 @@ export default function HouseIllustration({
     wallTop = 262;
     wall = `${x0},226 ${x1},264 ${x1},${ground} ${x0},${ground}`;
     roof = <polygon points={`${x0 - 26},214 ${x1 + 26},256 ${x1 + 26},268 ${x0 - 26},226`} fill={ROOF} />;
-  } else if (forma === 'plana') {
+  } else if (forma === 'plana' || forma === 'transitable') {
+    // Plana: solo la losa. Transitable: losa con barandilla de cristal.
     wallTop = 272;
     wall = `${x0},272 ${x1},272 ${x1},${ground} ${x0},${ground}`;
     const posts = Array.from({ length: Math.round(w / 70) + 1 }, (_, i) => x0 + (i * w) / Math.round(w / 70));
     roof = (
       <g>
-        {railing && (
+        {forma === 'transitable' && (
           <>
             <rect x={x0 + 4} y={226} width={w - 8} height={34} fill="#dfe8ec" opacity={0.7} />
             {posts.map((x) => (

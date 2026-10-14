@@ -7,7 +7,7 @@ import ConditionsCheckbox from './ConditionsCheckbox';
 import { clearDraft, loadAcceptance, loadDraft } from '@/lib/draft';
 import type { Conditions, Selection } from '@/lib/types';
 
-export default function LoginForm({ conditions }: { conditions: Conditions | null }) {
+export default function LoginForm({ conditions, next }: { conditions: Conditions | null; next?: string }) {
   const router = useRouter();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ export default function LoginForm({ conditions }: { conditions: Conditions | nul
       return setError(data.error ?? 'No se pudo iniciar sesión.');
     }
     // Si venía de diseñar una casa, la cotización pendiente se guarda al entrar.
-    let target = '/cuenta';
+    let target = next ?? '/cuenta';
     if (draft) {
       const q = await fetch('/api/quotes', {
         method: 'POST',

@@ -7,3 +7,4 @@ from . import ticket
 from . import slide
 from . import distribucion
 from . import condicion
+from . import blog

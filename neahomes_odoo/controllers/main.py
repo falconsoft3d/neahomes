@@ -99,9 +99,10 @@ class NeahomesApi(http.Controller):
         data['currency'] = request.env['neahomes.cotizacion'].sudo()._get_company().currency_id.name
         return self._json(data)
 
-    def _image_response(self, model, record_id, width, max_width):
-        record = request.env[model].sudo().browse(record_id).exists()
-        if not record or not record.active or not record.image:
+    def _image_response(self, model, record_id, width, max_width, domain=None):
+        # search() excluye los archivados; domain añade condiciones (p. ej. artículo publicado).
+        record = request.env[model].sudo().search([('id', '=', record_id)] + (domain or []), limit=1)
+        if not record or not record.image:
             return self._error('Imagen no encontrada', 404)
         width = min(int(width), max_width) if str(width).isdigit() else 0
         return request.env['ir.binary']._get_image_stream_from(record, 'image', width=width).get_response()
@@ -112,6 +113,76 @@ class NeahomesApi(http.Controller):
         if (err := self._guard()):
             return err
         return self._image_response('neahomes.modelo', modelo_id, width, 1920)
+
+    # ------------------------------------------------------------------ blog
+    def _published_articles(self):
+        return request.env['neahomes.blog.articulo'].sudo().search([('published', '=', True)])
+
+    @http.route('/neahomes/api/blog', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
+    def blog(self, categoria=None, **kw):
+        if (err := self._guard()):
+            return err
+        published = self._published_articles()
+        # Solo las categorías que tienen artículos publicados, con su número de artículos.
+        categories = published.categoria_id.sorted(lambda c: (c.sequence, c.name))
+        articles = published.filtered(lambda a: a.categoria_id.slug == categoria) if categoria else published
+        return self._json({
+            'categories': [c._api_values(count=len(published.filtered(lambda a, c=c: a.categoria_id == c)))
+                           for c in categories],
+            'articles': [a._api_values() for a in articles],
+        })
+
+    def _article_by_slug(self, slug):
+        return request.env['neahomes.blog.articulo'].sudo().search(
+            [('slug', '=', slug), ('published', '=', True)], limit=1)
+
+    def _article_detail(self, article, viewer=None):
+        return dict(
+            article._api_values(),
+            body=article.body or '',
+            comments=[c._api_values(viewer=viewer) for c in article.comentario_ids.filtered('visible')],
+        )
+
+    @http.route('/neahomes/api/blog/<string:slug>', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
+    def blog_article(self, slug, **kw):
+        if (err := self._guard()):
+            return err
+        article = self._article_by_slug(slug)
+        if not article:
+            return self._error('Artículo no encontrado', 404)
+        return self._json({'article': self._article_detail(article, viewer=self._partner())})
+
+    @http.route('/neahomes/api/blog/<string:slug>/comments', type='http', auth='public', methods=['POST'], csrf=False)
+    @json_errors
+    def blog_comment(self, slug, **kw):
+        if (err := self._guard()):
+            return err
+        partner = self._partner()
+        if not partner:
+            return self._error('Inicia sesión para comentar.', 401)
+        article = self._article_by_slug(slug)
+        if not article:
+            return self._error('Artículo no encontrado', 404)
+        if not article.allow_comments:
+            return self._error('Los comentarios están cerrados en este artículo.', 403)
+        text = (self._body().get('body') or '').strip()
+        if not text:
+            return self._error('Escribe un comentario.')
+        if len(text) > 2000:
+            return self._error('El comentario no puede superar los 2000 caracteres.')
+        request.env['neahomes.blog.comentario'].sudo().create({
+            'articulo_id': article.id, 'partner_id': partner.id, 'body': text,
+        })
+        return self._json({'article': self._article_detail(article, viewer=partner)})
+
+    @http.route('/neahomes/api/blog/<int:article_id>/image', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
+    def blog_image(self, article_id, width=0, **kw):
+        if (err := self._guard()):
+            return err
+        return self._image_response('neahomes.blog.articulo', article_id, width, 1920, [('published', '=', True)])
 
     @http.route('/neahomes/api/slides', type='http', auth='public', methods=['GET'], csrf=False)
     @json_errors

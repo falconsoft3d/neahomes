@@ -11,6 +11,7 @@ export default async function Header() {
       <nav className="header-nav">
         <Link href="/encargar">Encargar casa</Link>
         <Link href="/#modelos">Modelos</Link>
+        <Link href="/blog">Blog</Link>
         <Link href="/contacto">Contacto</Link>
         {loggedIn && comercial && <Link href="/crm">CRM</Link>}
       </nav>

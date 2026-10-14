@@ -25,7 +25,8 @@ class NeahomesCubierta(models.Model):
     forma = fields.Selection([
         ('dos_aguas', 'A dos aguas'),
         ('un_agua', 'A un agua'),
-        ('plana', 'Plana / transitable'),
+        ('plana', 'Plana'),
+        ('transitable', 'Transitable'),
     ], string='Forma', default='dos_aguas', required=True,
         help='Forma usada para dibujar la cubierta en el diseñador web.')
 

@@ -1,7 +1,7 @@
 import 'server-only';
 import { cookies } from 'next/headers';
 import { unstable_rethrow } from 'next/navigation';
-import type { Catalog, Conditions, Slide } from './types';
+import type { BlogArticle, BlogArticleDetail, BlogCategory, Catalog, Conditions, Slide } from './types';
 
 export const TOKEN_COOKIE = 'nea_token';
 /** Solo para la interfaz (enlace al CRM); los permisos reales los comprueba Odoo en cada llamada. */
@@ -57,6 +57,17 @@ function clientHeaders(req: Request): Record<string, string> {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || req.headers.get('x-real-ip') || '';
   const ua = req.headers.get('user-agent') || '';
   return { ...(ip && { 'X-Neahomes-Client-IP': ip }), ...(ua && { 'X-Neahomes-Client-UA': ua.slice(0, 255) }) };
+}
+
+export async function getBlog(categoria?: string) {
+  const query = categoria ? `?categoria=${encodeURIComponent(categoria)}` : '';
+  const res = await odoo<{ categories: BlogCategory[]; articles: BlogArticle[] }>(`/blog${query}`);
+  return res.ok ? res.data : null;
+}
+
+export async function getArticle(slug: string, token?: string): Promise<BlogArticleDetail | null> {
+  const res = await odoo<{ article: BlogArticleDetail }>(`/blog/${encodeURIComponent(slug)}`, { token });
+  return res.ok ? res.data.article : null;
 }
 
 export async function getConditions(): Promise<Conditions | null> {

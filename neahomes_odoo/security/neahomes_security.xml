@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="module_category_neahomes" model="ir.module.category">
+        <field name="name">NeaHomes</field>
+        <field name="sequence">50</field>
+    </record>
+
+    <!-- Solo los miembros ven el menú NeaHomes y la pestaña NeaHome del contacto.
+         La web no depende de este grupo: su API trabaja con sudo. -->
+    <record id="group_neahomes_user" model="res.groups">
+        <field name="name">Usuario</field>
+        <field name="category_id" ref="module_category_neahomes"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+</odoo>

@@ -374,6 +374,133 @@
         <field name="view_mode">tree,form</field>
     </record>
 
+    <!-- Blog -->
+    <record id="view_neahomes_blog_categoria_tree" model="ir.ui.view">
+        <field name="name">neahomes.blog.categoria.tree</field>
+        <field name="model">neahomes.blog.categoria</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="slug" optional="show"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_neahomes_blog_categoria" model="ir.actions.act_window">
+        <field name="name">Categorías</field>
+        <field name="res_model">neahomes.blog.categoria</field>
+        <field name="view_mode">tree</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <record id="view_neahomes_blog_articulo_tree" model="ir.ui.view">
+        <field name="name">neahomes.blog.articulo.tree</field>
+        <field name="model">neahomes.blog.articulo</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="date"/>
+                <field name="name"/>
+                <field name="categoria_id"/>
+                <field name="author_id" optional="show"/>
+                <field name="comment_count"/>
+                <field name="published" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_neahomes_blog_articulo_form" model="ir.ui.view">
+        <field name="name">neahomes.blog.articulo.form</field>
+        <field name="model">neahomes.blog.articulo</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Borrador" bg_color="text-bg-warning" invisible="published"/>
+                    <field name="image" widget="image" class="oe_avatar" options="{'size': [240, 135]}"/>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Título del artículo"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="categoria_id"/>
+                            <field name="date"/>
+                            <field name="author_id"/>
+                        </group>
+                        <group>
+                            <field name="published" widget="boolean_toggle"/>
+                            <field name="allow_comments" widget="boolean_toggle"/>
+                            <field name="slug"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <field name="summary" placeholder="Resumen que aparece en el listado del blog"/>
+                    <notebook>
+                        <page string="Contenido" name="content">
+                            <field name="body"/>
+                        </page>
+                        <page string="Comentarios" name="comments">
+                            <field name="comentario_ids">
+                                <tree editable="bottom" create="false">
+                                    <field name="create_date" string="Fecha" readonly="1"/>
+                                    <field name="partner_id" readonly="1"/>
+                                    <field name="body" readonly="1"/>
+                                    <field name="visible" widget="boolean_toggle"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_neahomes_blog_articulo_search" model="ir.ui.view">
+        <field name="name">neahomes.blog.articulo.search</field>
+        <field name="model">neahomes.blog.articulo</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="categoria_id"/>
+                <filter name="publicados" string="Publicados" domain="[('published', '=', True)]"/>
+                <filter name="borradores" string="Borradores" domain="[('published', '=', False)]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter name="group_categoria" string="Categoría" context="{'group_by': 'categoria_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_neahomes_blog_articulo" model="ir.actions.act_window">
+        <field name="name">Artículos</field>
+        <field name="res_model">neahomes.blog.articulo</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Escribe tu primer artículo</p>
+            <p>Márcalo como «Publicado» para que aparezca en el blog de la web.</p>
+        </field>
+    </record>
+
+    <record id="view_neahomes_blog_comentario_tree" model="ir.ui.view">
+        <field name="name">neahomes.blog.comentario.tree</field>
+        <field name="model">neahomes.blog.comentario</field>
+        <field name="arch" type="xml">
+            <tree create="false" editable="bottom">
+                <field name="create_date" string="Fecha" readonly="1"/>
+                <field name="articulo_id" readonly="1"/>
+                <field name="partner_id" readonly="1"/>
+                <field name="body" readonly="1"/>
+                <field name="visible" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_neahomes_blog_comentario" model="ir.actions.act_window">
+        <field name="name">Comentarios</field>
+        <field name="res_model">neahomes.blog.comentario</field>
+        <field name="view_mode">tree</field>
+    </record>
+
     <!-- Tickets -->
     <record id="view_neahomes_ticket_tree" model="ir.ui.view">
         <field name="name">neahomes.ticket.tree</field>
@@ -617,7 +744,7 @@
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                <page string="NeaHome" name="neahome">
+                <page string="NeaHome" name="neahome" groups="neahomes_odoo.group_neahomes_user">
                     <group>
                         <group string="Acceso web">
                             <field name="nea_portal" widget="boolean_toggle"/>
@@ -658,36 +785,50 @@
     <menuitem id="menu_neahomes_root"
               name="NeaHomes"
               sequence="21"
+              groups="group_neahomes_user"
               web_icon="neahomes_odoo,static/description/icon.png"/>
 
     <menuitem id="menu_neahomes_cotizacion" name="Cotizaciones" parent="menu_neahomes_root"
               action="action_neahomes_cotizacion" sequence="5"/>
-    <menuitem id="menu_neahomes_cubierta" name="Cubierta" parent="menu_neahomes_root"
-              action="action_neahomes_cubierta" sequence="20"/>
-    <menuitem id="menu_neahomes_acabado" name="Acabados" parent="menu_neahomes_root"
-              action="action_neahomes_acabado" sequence="30"/>
-    <menuitem id="menu_neahomes_modelo" name="Modelos" parent="menu_neahomes_root"
-              action="action_neahomes_modelo" sequence="10"/>
-    <menuitem id="menu_neahomes_distribucion" name="Distribución" parent="menu_neahomes_root"
-              action="action_neahomes_distribucion" sequence="11"/>
     <menuitem id="menu_neahomes_ticket" name="Tickets" parent="menu_neahomes_root"
               action="action_neahomes_ticket" sequence="7"/>
+
     <menuitem id="menu_neahomes_contactos" name="Contactos" parent="menu_neahomes_root" sequence="8"/>
     <menuitem id="menu_neahomes_clientes" name="Clientes" parent="menu_neahomes_contactos"
               action="action_neahomes_clientes" sequence="10"/>
     <menuitem id="menu_neahomes_comerciales" name="Comerciales" parent="menu_neahomes_contactos"
               action="action_neahomes_comerciales" sequence="20"/>
-    <menuitem id="menu_neahomes_contacto" name="Formulario de contacto" parent="menu_neahomes_root"
-              action="action_neahomes_contacto" sequence="50"/>
 
-    <menuitem id="menu_neahomes_condiciones" name="Condiciones de venta" parent="menu_neahomes_root" sequence="85"/>
+    <!-- Diseño: catálogos que configuran la casa en el diseñador web -->
+    <menuitem id="menu_neahomes_diseno" name="Diseño" parent="menu_neahomes_root" sequence="10"/>
+    <menuitem id="menu_neahomes_modelo" name="Modelos" parent="menu_neahomes_diseno"
+              action="action_neahomes_modelo" sequence="10"/>
+    <menuitem id="menu_neahomes_distribucion" name="Distribución" parent="menu_neahomes_diseno"
+              action="action_neahomes_distribucion" sequence="20"/>
+    <menuitem id="menu_neahomes_cubierta" name="Cubierta" parent="menu_neahomes_diseno"
+              action="action_neahomes_cubierta" sequence="30"/>
+    <menuitem id="menu_neahomes_acabado" name="Acabados" parent="menu_neahomes_diseno"
+              action="action_neahomes_acabado" sequence="40"/>
+
+    <menuitem id="menu_neahomes_blog" name="Blog" parent="menu_neahomes_root" sequence="88"/>
+    <menuitem id="menu_neahomes_blog_articulo" name="Artículos" parent="menu_neahomes_blog"
+              action="action_neahomes_blog_articulo" sequence="10"/>
+    <menuitem id="menu_neahomes_blog_categoria" name="Categorías" parent="menu_neahomes_blog"
+              action="action_neahomes_blog_categoria" sequence="20"/>
+    <menuitem id="menu_neahomes_blog_comentario" name="Comentarios" parent="menu_neahomes_blog"
+              action="action_neahomes_blog_comentario" sequence="30"/>
+
+    <!-- Web: contenido y formularios de la web -->
+    <menuitem id="menu_neahomes_web" name="Web" parent="menu_neahomes_root" sequence="90"/>
+    <menuitem id="menu_neahomes_slide" name="Carrusel" parent="menu_neahomes_web"
+              action="action_neahomes_slide" sequence="10"/>
+    <menuitem id="menu_neahomes_contacto" name="Formulario de contacto" parent="menu_neahomes_web"
+              action="action_neahomes_contacto" sequence="20"/>
+    <menuitem id="menu_neahomes_condiciones" name="Condiciones de venta" parent="menu_neahomes_web" sequence="30"/>
     <menuitem id="menu_neahomes_condicion" name="Condiciones" parent="menu_neahomes_condiciones"
               action="action_neahomes_condicion" sequence="10"/>
     <menuitem id="menu_neahomes_aceptacion" name="Aceptaciones" parent="menu_neahomes_condiciones"
               action="action_neahomes_aceptacion" sequence="20"/>
-    <menuitem id="menu_neahomes_web" name="Web" parent="menu_neahomes_root" sequence="90"/>
-    <menuitem id="menu_neahomes_slide" name="Carrusel" parent="menu_neahomes_web"
-              action="action_neahomes_slide" sequence="10"/>
 
     <menuitem id="menu_neahomes_config" name="Configuración" parent="menu_neahomes_root" sequence="100"/>
     <menuitem id="menu_neahomes_parametro" name="Parámetros" parent="menu_neahomes_config"

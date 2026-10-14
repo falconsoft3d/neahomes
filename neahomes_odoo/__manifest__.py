@@ -1,6 +1,6 @@
 {
     'name': 'NeaHomes',
-    'version': '17.0.1.7.0',
+    'version': '17.0.2.0.0',
     'summary': 'Configuración de casas NeaHomes',
     'sequence': 10,
     'description': """
@@ -16,6 +16,8 @@ para el frontend Next.js (neahomes_web).
     'auto_install': False,
     'application': True,
     'data': [
+        'security/neahomes_security.xml',
+        'security/neahomes_security_users.xml',
         'security/ir.model.access.csv',
         'data/neahomes_data.xml',
         'data/neahomes_condiciones.xml',

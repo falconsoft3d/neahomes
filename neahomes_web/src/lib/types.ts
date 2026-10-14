@@ -1,7 +1,7 @@
 export type CatalogItem = { id: number; name: string; price: number };
 export type Distribucion = { id: number; name: string; max: number };
 export type Modelo = CatalogItem & { m2: number; description: string; image_version: number; distribuciones: Distribucion[] };
-export type Forma = 'dos_aguas' | 'un_agua' | 'plana';
+export type Forma = 'dos_aguas' | 'un_agua' | 'plana' | 'transitable';
 export type Cubierta = CatalogItem & { forma: Forma };
 export type Acabado = CatalogItem & { color: string };
 
@@ -31,6 +31,22 @@ export type Slide = {
   button2_text: string;
   button2_url: string;
 };
+
+export type BlogCategory = { id: number; name: string; slug: string; count: number };
+export type BlogArticle = {
+  id: number;
+  slug: string;
+  title: string;
+  summary: string;
+  date: string;
+  author: string;
+  category: { name: string; slug: string } | null;
+  image_version: number;
+  comment_count: number;
+  allow_comments: boolean;
+};
+export type BlogComment = { id: number; author: string; body: string; date: string; mine: boolean };
+export type BlogArticleDetail = BlogArticle & { body: string; comments: BlogComment[] };
 
 export type Conditions = { id: number; name: string; date: string; body: string };
 
