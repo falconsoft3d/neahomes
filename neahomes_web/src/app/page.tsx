@@ -54,7 +54,7 @@ export default async function Home() {
                 {m.image_version > 0 ? (
                   <ModeloPhoto id={m.id} version={m.image_version} alt={m.name} width={800} />
                 ) : (
-                  <HouseIllustration m2={m.m2 || 70} forma="plana" color={acabado?.color} showDimension={false} />
+                  <HouseIllustration m2={m.m2 || 70} forma="plana" railing={false} color={acabado?.color} showDimension={false} />
                 )}
                 <div className="card-body">
                   <h3>{m.name}</h3>

@@ -5,6 +5,8 @@ type Props = {
   forma?: Forma;
   color?: string;
   showDimension?: boolean;
+  /** Solo para forma "plana": barandilla de cubierta transitable. */
+  railing?: boolean;
   className?: string;
 };
 
@@ -17,6 +19,7 @@ export default function HouseIllustration({
   forma = 'dos_aguas',
   color = '#23272d',
   showDimension = true,
+  railing = true,
   className,
 }: Props) {
   const ground = 430;
@@ -37,11 +40,15 @@ export default function HouseIllustration({
     const posts = Array.from({ length: Math.round(w / 70) + 1 }, (_, i) => x0 + (i * w) / Math.round(w / 70));
     roof = (
       <g>
-        <rect x={x0 + 4} y={226} width={w - 8} height={34} fill="#dfe8ec" opacity={0.7} />
-        {posts.map((x) => (
-          <rect key={x} x={x - 1.5} y={224} width={3} height={36} fill={FRAME} />
-        ))}
-        <rect x={x0} y={222} width={w} height={4} fill={FRAME} />
+        {railing && (
+          <>
+            <rect x={x0 + 4} y={226} width={w - 8} height={34} fill="#dfe8ec" opacity={0.7} />
+            {posts.map((x) => (
+              <rect key={x} x={x - 1.5} y={224} width={3} height={36} fill={FRAME} />
+            ))}
+            <rect x={x0} y={222} width={w} height={4} fill={FRAME} />
+          </>
+        )}
         <rect x={x0 - 14} y={258} width={w + 28} height={14} fill={ROOF} />
       </g>
     );
