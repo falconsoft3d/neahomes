@@ -1,0 +1,22 @@
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import Header from '@/components/Header';
+import './globals.css';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+
+export const metadata: Metadata = {
+  title: 'NeaHomes · Casas prefabricadas llave en mano',
+  description: 'Diseña tu casa prefabricada, elige tamaño, cubierta y acabados y obtén tu precio cerrado al instante.',
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="es" className={inter.variable}>
+      <body>
+        <Header />
+        <main>{children}</main>
+      </body>
+    </html>
+  );
+}

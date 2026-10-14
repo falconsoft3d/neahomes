@@ -1,1 +1,4 @@
 from . import neahomes
+from . import parametro
+from . import cotizacion
+from . import res_partner

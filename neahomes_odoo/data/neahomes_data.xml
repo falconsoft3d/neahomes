@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo noupdate="1">
+    <record id="seq_neahomes_cotizacion" model="ir.sequence">
+        <field name="name">Cotización NeaHomes</field>
+        <field name="code">neahomes.cotizacion</field>
+        <field name="prefix">NH</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="param_ci_company" model="neahomes.parametro">
+        <field name="name">ci_company</field>
+        <field name="valor">1</field>
+    </record>
+    <record id="param_api_key" model="neahomes.parametro">
+        <field name="name">api_key</field>
+        <field name="valor"></field>
+    </record>
+
+    <!-- Catálogo de ejemplo (editable desde NeaHomes) -->
+    <record id="modelo_nea" model="neahomes.modelo">
+        <field name="name">NEA</field>
+        <field name="description">Casa prefabricada llave en mano</field>
+        <field name="price">30000</field>
+    </record>
+    <record id="tamano_40" model="neahomes.tamano">
+        <field name="name">40 m²</field><field name="m2">40</field><field name="price">0</field><field name="sequence">1</field>
+    </record>
+    <record id="tamano_70" model="neahomes.tamano">
+        <field name="name">70 m²</field><field name="m2">70</field><field name="price">22000</field><field name="sequence">2</field>
+    </record>
+    <record id="tamano_90" model="neahomes.tamano">
+        <field name="name">90 m²</field><field name="m2">90</field><field name="price">38000</field><field name="sequence">3</field>
+    </record>
+    <record id="cubierta_dos_aguas" model="neahomes.cubierta">
+        <field name="name">A dos aguas</field><field name="forma">dos_aguas</field><field name="price">0</field><field name="sequence">1</field>
+    </record>
+    <record id="cubierta_un_agua" model="neahomes.cubierta">
+        <field name="name">A un agua</field><field name="forma">un_agua</field><field name="price">1500</field><field name="sequence">2</field>
+    </record>
+    <record id="cubierta_transitable" model="neahomes.cubierta">
+        <field name="name">Transitable</field><field name="forma">plana</field><field name="price">6500</field><field name="sequence">3</field>
+    </record>
+    <record id="acabado_negro" model="neahomes.acabado">
+        <field name="name">Negro carbón</field><field name="color">#23272d</field><field name="price">0</field><field name="sequence">1</field>
+    </record>
+    <record id="acabado_madera" model="neahomes.acabado">
+        <field name="name">Madera natural</field><field name="color">#b98a5e</field><field name="price">2500</field><field name="sequence">2</field>
+    </record>
+    <record id="acabado_nogal" model="neahomes.acabado">
+        <field name="name">Nogal</field><field name="color">#5b4636</field><field name="price">3200</field><field name="sequence">3</field>
+    </record>
+</odoo>

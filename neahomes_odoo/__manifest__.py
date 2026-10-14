@@ -6,15 +6,18 @@
     'description': """
 NeaHomes
 ================================
-Catálogos de Tamaño, Cubierta, Acabados y Modelos.
+Catálogos de Tamaño, Cubierta, Acabados y Modelos con precio,
+cotizaciones que generan oportunidades en el CRM y API JSON
+para el frontend Next.js (neahomes_web).
     """,
     'website': 'https://www.marlonfalcon.com',
-    'depends': ['base', 'contacts'],
+    'depends': ['base', 'contacts', 'crm'],
     'category': 'Extra Tools',
     'auto_install': False,
     'application': True,
     'data': [
         'security/ir.model.access.csv',
+        'data/neahomes_data.xml',
         'views/view.xml',
     ],
     'license': 'LGPL-3',
