@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Captcha from './Captcha';
 import ConditionsCheckbox from './ConditionsCheckbox';
 import QuoteSummary from './QuoteSummary';
 import { clearDraft, clearRef, loadAcceptance, loadDraft, loadRef } from '@/lib/draft';
@@ -13,6 +14,7 @@ export default function RegisterForm({ catalog, conditions }: { catalog: Catalog
   const [draft, setDraft] = useState<Selection | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captchaKey, setCaptchaKey] = useState(0);
 
   const [accepted, setAccepted] = useState(false);
 
@@ -39,7 +41,11 @@ export default function RegisterForm({ catalog, conditions }: { catalog: Catalog
     });
     const data = await res.json().catch(() => ({}));
     setLoading(false);
-    if (!res.ok) return setError(data.error ?? 'No se pudo completar el registro.');
+    if (!res.ok) {
+      // Cada verificación sirve una vez: tras cualquier error se pide una nueva.
+      setCaptchaKey((k) => k + 1);
+      return setError(data.error ?? 'No se pudo completar el registro.');
+    }
     clearDraft();
     clearRef();
     router.push(data.quote ? `/cuenta?nueva=${encodeURIComponent(data.quote.name)}` : '/cuenta');
@@ -57,6 +63,7 @@ export default function RegisterForm({ catalog, conditions }: { catalog: Catalog
         <label>Usuario<input name="user" required autoComplete="username" autoCapitalize="none" /></label>
         <label>Contraseña<input name="password" type="password" required minLength={6} autoComplete="new-password" /></label>
         {draft && conditions && <ConditionsCheckbox conditions={conditions} checked={accepted} onChange={setAccepted} />}
+        <Captcha resetKey={captchaKey} />
         {error && <p className="form-error">{error}</p>}
         <button className="btn btn-primary btn-block" disabled={loading}>
           {loading ? 'Creando cuenta…' : draft ? 'Registrarme y guardar' : 'Crear cuenta'}

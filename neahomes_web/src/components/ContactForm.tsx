@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import Captcha from './Captcha';
 
 export default function ContactForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [captchaKey, setCaptchaKey] = useState(0);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -19,6 +21,8 @@ export default function ContactForm() {
     });
     const data = await res.json().catch(() => ({}));
     setLoading(false);
+    // Cada verificación sirve una vez: se pide una nueva tras enviar o tras un error.
+    setCaptchaKey((k) => k + 1);
     if (!res.ok) return setError(data.error ?? 'No se pudo enviar el mensaje.');
     form.reset();
     setSent(true);
@@ -33,6 +37,7 @@ export default function ContactForm() {
         <label>Email<input name="email" type="email" required autoComplete="email" /></label>
         <label>Teléfono<input name="phone" type="tel" autoComplete="tel" /></label>
         <label>Texto<textarea name="message" required rows={5} /></label>
+        <Captcha resetKey={captchaKey} />
         {error && <p className="form-error">{error}</p>}
         {sent && <p className="notice">Mensaje enviado. Gracias por escribirnos.</p>}
         <button className="btn btn-primary btn-block" disabled={loading}>
