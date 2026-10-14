@@ -21,35 +21,4 @@
         <field name="valor"></field>
     </record>
 
-    <!-- Catálogo de ejemplo (editable desde NeaHomes) -->
-    <record id="modelo_nea" model="neahomes.modelo">
-        <field name="name">NEA 40</field><field name="m2">40</field><field name="price">30000</field><field name="sequence">1</field>
-        <field name="description">Compacta, ideal para una o dos personas</field>
-    </record>
-    <record id="modelo_nea_70" model="neahomes.modelo">
-        <field name="name">NEA 70</field><field name="m2">70</field><field name="price">52000</field><field name="sequence">2</field>
-        <field name="description">Dos dormitorios y salón amplio</field>
-    </record>
-    <record id="modelo_nea_90" model="neahomes.modelo">
-        <field name="name">NEA 90</field><field name="m2">90</field><field name="price">68000</field><field name="sequence">3</field>
-        <field name="description">Tres dormitorios para toda la familia</field>
-    </record>
-    <record id="cubierta_dos_aguas" model="neahomes.cubierta">
-        <field name="name">A dos aguas</field><field name="forma">dos_aguas</field><field name="price">0</field><field name="sequence">1</field>
-    </record>
-    <record id="cubierta_un_agua" model="neahomes.cubierta">
-        <field name="name">A un agua</field><field name="forma">un_agua</field><field name="price">1500</field><field name="sequence">2</field>
-    </record>
-    <record id="cubierta_transitable" model="neahomes.cubierta">
-        <field name="name">Transitable</field><field name="forma">plana</field><field name="price">6500</field><field name="sequence">3</field>
-    </record>
-    <record id="acabado_negro" model="neahomes.acabado">
-        <field name="name">Negro carbón</field><field name="color">#23272d</field><field name="price">0</field><field name="sequence">1</field>
-    </record>
-    <record id="acabado_madera" model="neahomes.acabado">
-        <field name="name">Madera natural</field><field name="color">#b98a5e</field><field name="price">2500</field><field name="sequence">2</field>
-    </record>
-    <record id="acabado_nogal" model="neahomes.acabado">
-        <field name="name">Nogal</field><field name="color">#5b4636</field><field name="price">3200</field><field name="sequence">3</field>
-    </record>
 </odoo>
