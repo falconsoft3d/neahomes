@@ -50,6 +50,22 @@ export type BlogArticleDetail = BlogArticle & { body: string; comments: BlogComm
 
 export type Conditions = { id: number; name: string; date: string; body: string };
 
+export type Country = { id: number; name: string; code: string };
+export type CountryState = { id: number; name: string };
+export type Profile = {
+  name: string;
+  email: string;
+  phone: string;
+  mobile: string;
+  vat: string;
+  street: string;
+  street2: string;
+  zip: string;
+  city: string;
+  country_id: number | null;
+  state_id: number | null;
+};
+
 export type Partner = { id: number; name: string; email: string; phone: string; user: string; comercial: boolean };
 
 export type Quote = {

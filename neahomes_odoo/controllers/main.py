@@ -1,13 +1,19 @@
 import functools
 import json
 import logging
+import re
 
 from odoo import http
+from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
 from ..models.cotizacion import QUOTE_STATES
 
 _logger = logging.getLogger(__name__)
+
+# Campos del contacto que el cliente puede completar desde /cuenta (además de país y provincia).
+PROFILE_FIELDS = ('name', 'email', 'phone', 'mobile', 'vat', 'street', 'street2', 'zip', 'city')
+EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
 CATALOGS = {
     'modelos': 'neahomes.modelo',
@@ -422,6 +428,74 @@ class NeahomesApi(http.Controller):
             return self._error(str(e))
         self._register_acceptance(partner, condicion, quote)
         return self._json({'quote': quote._api_values()})
+
+    # --------------------------------------------------------- datos personales
+    def _es(self, model):
+        """Nombres de países y provincias en español si el idioma está instalado."""
+        Model = request.env[model].sudo()
+        if request.env['res.lang'].sudo().search_count([('code', '=', 'es_ES')]):
+            Model = Model.with_context(lang='es_ES')
+        return Model
+
+    def _profile_values(self, partner):
+        return dict(
+            {field: partner[field] or '' for field in PROFILE_FIELDS},
+            country_id=partner.country_id.id or None,
+            state_id=partner.state_id.id or None,
+        )
+
+    @http.route('/neahomes/api/profile', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
+    def profile(self, **kw):
+        if (err := self._guard()):
+            return err
+        partner = self._partner()
+        if not partner:
+            return self._error('Sesión no válida', 401)
+        countries = self._es('res.country').search([]).sorted('name')
+        return self._json({
+            'profile': self._profile_values(partner),
+            'countries': [{'id': c.id, 'name': c.name, 'code': c.code} for c in countries],
+        })
+
+    @http.route('/neahomes/api/states', type='http', auth='public', methods=['GET'], csrf=False)
+    @json_errors
+    def states(self, country_id=None, **kw):
+        if (err := self._guard()):
+            return err
+        if not str(country_id or '').isdigit():
+            return self._json({'states': []})
+        states = self._es('res.country.state').search([('country_id', '=', int(country_id))]).sorted('name')
+        return self._json({'states': [{'id': s.id, 'name': s.name} for s in states]})
+
+    @http.route('/neahomes/api/profile', type='http', auth='public', methods=['POST'], csrf=False)
+    @json_errors
+    def update_profile(self, **kw):
+        if (err := self._guard()):
+            return err
+        partner = self._partner()
+        if not partner:
+            return self._error('Sesión no válida', 401)
+        body = self._body()
+        vals = {field: (str(body.get(field) or '')).strip()[:255] or False for field in PROFILE_FIELDS}
+        if not vals['name']:
+            return self._error('El nombre es obligatorio.')
+        if not vals['email'] or not EMAIL_RE.match(vals['email']):
+            return self._error('Indica un email válido.')
+        country = self._es('res.country').browse(int(body['country_id'])).exists() \
+            if str(body.get('country_id') or '').isdigit() else self._es('res.country')
+        state = self._es('res.country.state').browse(int(body['state_id'])).exists() \
+            if str(body.get('state_id') or '').isdigit() else self._es('res.country.state')
+        if state and state.country_id != country:
+            return self._error('La provincia no corresponde al país elegido.')
+        vals.update(country_id=country.id or False, state_id=state.id or False)
+        try:
+            partner.write(vals)
+        except (ValidationError, UserError) as e:
+            # P. ej. NIF con formato incorrecto si está instalada la validación de NIF.
+            request.env.cr.rollback()
+            return self._error(e.args[0] if e.args else str(e))
+        return self._json({'profile': self._profile_values(partner), 'partner': partner._nea_api_values()})
 
     @http.route('/neahomes/api/password', type='http', auth='public', methods=['POST'], csrf=False)
     @json_errors

@@ -1772,6 +1772,102 @@ dl .total dd {
   min-width: 140px;
 }
 
+/* ------------------------------------------------------------ mis datos */
+#datos {
+  scroll-margin-top: calc(var(--header-h) + 16px);
+}
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+}
+
+.profile-notice {
+  margin-top: 0;
+}
+
+.profile-view {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 32px;
+  width: 100%;
+}
+
+.profile-view div {
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 2px;
+}
+
+.profile-view .wide {
+  grid-column: 1 / -1;
+}
+
+.profile-view dt {
+  font-size: 12px;
+}
+
+.profile-view dd {
+  white-space: normal;
+  font-weight: 400;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+  width: 100%;
+}
+
+.profile-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.profile-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.profile-grid input,
+.profile-grid select {
+  height: 40px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--soft);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
+.profile-grid input:focus,
+.profile-grid select:focus {
+  outline: none;
+  background: #fff;
+  border-color: var(--text);
+}
+
+.profile-grid select:disabled {
+  opacity: 0.6;
+}
+
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 /* ---------------------------------------------------------- conversación */
 .ticket-thread {
   margin-top: 6px;
@@ -2152,6 +2248,11 @@ dl .total dd {
   }
 
   .blog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-view,
+  .profile-grid {
     grid-template-columns: 1fr;
   }
 

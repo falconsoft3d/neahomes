@@ -4,10 +4,11 @@ import HouseIllustration from '@/components/HouseIllustration';
 import ModeloPhoto from '@/components/ModeloPhoto';
 import LogoutButton from '@/components/LogoutButton';
 import TicketCard from '@/components/TicketCard';
+import ProfileSection from '@/components/ProfileSection';
 import TicketForm from '@/components/TicketForm';
 import { getToken, odoo } from '@/lib/odoo';
 import { formatDate, formatPrice } from '@/lib/format';
-import type { Partner, Quote, Ticket } from '@/lib/types';
+import type { Country, Partner, Profile, Quote, Ticket } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,10 +17,11 @@ type Props = { searchParams: Promise<{ nueva?: string }> };
 export default async function CuentaPage({ searchParams }: Props) {
   const token = await getToken();
   if (!token) redirect('/login');
-  const [res, catalog, { nueva }] = await Promise.all([
+  const [res, catalog, { nueva }, profileRes] = await Promise.all([
     odoo<{ partner: Partner; quotes: Quote[]; tickets: Ticket[] }>('/me', { token }),
     odoo<{ currency: string }>('/catalog'),
     searchParams,
+    odoo<{ profile: Profile; countries: Country[] }>('/profile', { token }),
   ]);
   // Token caducado o contraseña cambiada desde Odoo: hay que volver a entrar.
   if (res.status === 401) redirect('/login');
@@ -43,6 +45,7 @@ export default async function CuentaPage({ searchParams }: Props) {
         </div>
         <div className="account-actions">
           {partner.comercial && <Link href="/crm" className="btn btn-dark">Ir al CRM</Link>}
+          <Link href="#datos" className="btn btn-light">Mis datos</Link>
           <Link href="/encargar" className="btn btn-primary">Diseñar otra casa</Link>
           <LogoutButton />
         </div>
@@ -99,6 +102,15 @@ export default async function CuentaPage({ searchParams }: Props) {
             <TicketCard key={t.id} ticket={t} />
           ))}
         </ul>
+      )}
+
+      <div className="account-section-head" id="datos">
+        <h2 className="account-title">Mis datos</h2>
+      </div>
+      {profileRes.ok ? (
+        <ProfileSection profile={profileRes.data.profile} countries={profileRes.data.countries} />
+      ) : (
+        <p className="muted">No pudimos cargar tus datos. Inténtalo más tarde.</p>
       )}
     </div>
   );
